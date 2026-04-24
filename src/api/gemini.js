@@ -92,6 +92,7 @@ export function buildPrompt(patient) {
     `Nurse note: ${lastNote}`,
     '',
     'Return only the explanation text, no headings or bullets.',
+    'Explain current condition AND likely near-term deterioration.',
   ].join('\n')
 }
 

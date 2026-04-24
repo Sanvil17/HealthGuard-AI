@@ -418,7 +418,7 @@ function App() {
       </header>
 
       <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:px-6">
-        <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
+        <div className="grid items-start gap-5 lg:grid-cols-[1.25fr_1fr]">
           <WardDashboard
             patients={patients}
             selectedPatientId={selectedPatient?.id ?? null}
@@ -426,7 +426,7 @@ function App() {
             onAddPatient={() => setIsAddPatientOpen(true)}
           />
 
-          <section className="dashboard-panel p-4">
+          <section className="dashboard-panel max-h-[calc(100vh-10rem)] overflow-y-auto p-4">
             {selectedPatient ? (
               <>
                 <div className="mb-4 flex items-start justify-between">
