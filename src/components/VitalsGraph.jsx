@@ -1,6 +1,7 @@
 import {
   CategoryScale,
   Chart as ChartJS,
+  Filler,
   Legend,
   LineElement,
   LinearScale,
@@ -9,7 +10,7 @@ import {
 } from 'chart.js'
 import { Line } from 'react-chartjs-2'
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend)
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Legend, Filler)
 
 function VitalsGraph({ history }) {
   if (!history || history.length === 0) {
@@ -23,15 +24,25 @@ function VitalsGraph({ history }) {
       {
         label: 'Heart Rate',
         data: history.map((entry) => entry.hr),
-        borderColor: '#38bdf8',
-        backgroundColor: 'rgba(56, 189, 248, 0.3)',
+        yAxisID: 'yHr',
+        borderColor: '#44d6ff',
+        backgroundColor: 'rgba(68, 214, 255, 0.18)',
+        pointRadius: 2,
+        pointHoverRadius: 3,
+        borderWidth: 2,
+        fill: true,
         tension: 0.35,
       },
       {
         label: 'SpO2',
         data: history.map((entry) => entry.spo2),
-        borderColor: '#22c55e',
-        backgroundColor: 'rgba(34, 197, 94, 0.3)',
+        yAxisID: 'ySpo2',
+        borderColor: '#4ade80',
+        backgroundColor: 'rgba(74, 222, 128, 0.12)',
+        pointRadius: 2,
+        pointHoverRadius: 3,
+        borderWidth: 2,
+        fill: false,
         tension: 0.35,
       },
     ],
@@ -43,16 +54,34 @@ function VitalsGraph({ history }) {
     scales: {
       x: {
         ticks: { color: '#94a3b8' },
-        grid: { color: 'rgba(148, 163, 184, 0.08)' },
+        grid: { color: 'rgba(148, 163, 184, 0.06)' },
       },
-      y: {
+      yHr: {
+        position: 'left',
+        min: 50,
+        max: 180,
         ticks: { color: '#94a3b8' },
         grid: { color: 'rgba(148, 163, 184, 0.08)' },
+      },
+      ySpo2: {
+        position: 'right',
+        min: 78,
+        max: 100,
+        ticks: { color: '#94a3b8' },
+        grid: { drawOnChartArea: false },
       },
     },
     plugins: {
       legend: {
-        labels: { color: '#e2e8f0' },
+        labels: {
+          color: '#e2e8f0',
+          usePointStyle: true,
+        },
+      },
+      tooltip: {
+        backgroundColor: 'rgba(7, 22, 39, 0.94)',
+        borderColor: 'rgba(148, 163, 184, 0.28)',
+        borderWidth: 1,
       },
     },
   }

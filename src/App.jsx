@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { generateClinicalExplanation } from './api/gemini'
 import AIExplanation from './components/AIExplanation'
 import AlertBanner from './components/AlertBanner'
+import AddPatientModal from './components/AddPatientModal'
 import ReportButton from './components/ReportButton'
 import RiskScore from './components/RiskScore'
 import VitalsGraph from './components/VitalsGraph'
@@ -16,6 +17,88 @@ const fallbackVitals = {
   rr: 16,
   temp: 98.6,
   bp: '120/80',
+}
+
+function getClockTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  })
+}
+
+function getNextPatientId(patients) {
+  const highestIdNumber = patients.reduce((highest, patient) => {
+    const numeric = Number(String(patient.id).replace(/\D/g, ''))
+    if (!Number.isFinite(numeric)) {
+      return highest
+    }
+
+    return Math.max(highest, numeric)
+  }, 0)
+
+  return `P${String(highestIdNumber + 1).padStart(3, '0')}`
+}
+
+function getNextBedId(patients) {
+  const highestBedNumber = patients.reduce((highest, patient) => {
+    const numeric = Number(String(patient.bed).replace(/\D/g, ''))
+    if (!Number.isFinite(numeric)) {
+      return highest
+    }
+
+    return Math.max(highest, numeric)
+  }, 0)
+
+  return `B${String(highestBedNumber + 1).padStart(2, '0')}`
+}
+
+function createAlertPayload(patient) {
+  return {
+    id: `${patient.id}-${Date.now()}`,
+    patientName: patient.name,
+    score: patient.riskScore,
+    time: new Date().toLocaleTimeString(),
+  }
+}
+
+function buildPatientFromDraft(draftPatient, patients) {
+  const createdAt = getClockTime()
+  const currentVitals = {
+    hr: Number(draftPatient.currentVitals.hr),
+    spo2: Number(draftPatient.currentVitals.spo2),
+    rr: Number(draftPatient.currentVitals.rr),
+    temp: Number(draftPatient.currentVitals.temp),
+    bp: String(draftPatient.currentVitals.bp || fallbackVitals.bp),
+  }
+
+  const nextPatient = {
+    id: getNextPatientId(patients),
+    name: draftPatient.name,
+    bed: draftPatient.bed,
+    pattern: draftPatient.pattern,
+    deteriorationSpeed: draftPatient.pattern === 'deteriorating' ? 'normal' : undefined,
+    story: draftPatient.note || 'Added manually by nurse.',
+    currentVitals,
+    history: [
+      {
+        time: createdAt,
+        ...currentVitals,
+        note: draftPatient.note || 'Initial intake recorded.',
+      },
+    ],
+    aiExplanation: '',
+    simulationTicks: 0,
+  }
+
+  const riskScore = calculateRiskScore(nextPatient)
+
+  return {
+    ...nextPatient,
+    riskScore,
+    status: getStatusFromScore(riskScore),
+    lastUpdated: createdAt,
+  }
 }
 
 function hydratePatients(seedPatients) {
@@ -42,6 +125,7 @@ function App() {
     () => mockPatients[0]?.id ?? null,
   )
   const [activeAlert, setActiveAlert] = useState(null)
+  const [isAddPatientOpen, setIsAddPatientOpen] = useState(false)
   const [aiLoadingByPatient, setAiLoadingByPatient] = useState({})
 
   const autoTriggeredInRedRef = useRef(new Set())
@@ -91,12 +175,7 @@ function App() {
     startSimulation(setPatients, {
       intervalMs: 5000,
       onPatientTurnedRed: (patient) => {
-        setActiveAlert({
-          id: `${patient.id}-${Date.now()}`,
-          patientName: patient.name,
-          score: patient.riskScore,
-          time: new Date().toLocaleTimeString(),
-        })
+        setActiveAlert(createAlertPayload(patient))
 
         if (autoTriggeredInRedRef.current.has(patient.id)) {
           return
@@ -112,54 +191,108 @@ function App() {
     }
   }, [requestAiExplanation])
 
+  const suggestedBed = useMemo(() => getNextBedId(patients), [patients])
+
+  const handleAddPatient = useCallback(
+    (draftPatient) => {
+      const nextPatient = buildPatientFromDraft(draftPatient, patients)
+
+      setPatients((previousPatients) => [...previousPatients, nextPatient])
+      setSelectedPatientId(nextPatient.id)
+      setIsAddPatientOpen(false)
+
+      if (nextPatient.status !== 'red') {
+        return
+      }
+
+      autoTriggeredInRedRef.current.add(nextPatient.id)
+      setActiveAlert(createAlertPayload(nextPatient))
+      void requestAiExplanation(nextPatient)
+    },
+    [patients, requestAiExplanation],
+  )
+
   return (
-    <div className="min-h-screen bg-app-bg text-slate-100">
+    <div className="relative min-h-screen overflow-x-hidden bg-app-bg text-slate-100">
+      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
+        <div className="atmo-orb atmo-orb-a" />
+        <div className="atmo-orb atmo-orb-b" />
+        <div className="atmo-orb atmo-orb-c" />
+      </div>
+
       <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
 
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-6 lg:px-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
+      <header className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+        <div className="max-w-xl">
+          <p className="mb-2 text-xs uppercase tracking-[0.28em] text-cyan-200/80">
+            Athernex 2025 Live Ward Monitor
+          </p>
+          <h1 className="font-display text-2xl font-bold text-white lg:text-4xl">
             HealthGuard AI
           </h1>
-          <p className="text-sm text-slate-300">
+          <p className="text-sm text-slate-300 lg:text-base">
             Real-time deterioration prediction for ward patients.
           </p>
+
+          <div className="ecg-track mt-4">
+            <svg className="ecg-wave" viewBox="0 0 400 48" preserveAspectRatio="none">
+              <path d="M0 24 L32 24 L40 24 L50 12 L60 34 L68 24 L110 24 L128 24 L138 10 L150 36 L160 24 L206 24 L220 24 L230 13 L240 34 L248 24 L286 24 L302 24 L312 10 L326 36 L338 24 L400 24" />
+            </svg>
+          </div>
         </div>
-        <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs text-cyan-100">
-          Simulation Live
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsAddPatientOpen(true)}
+            className="rounded-xl border border-cyan-300/70 bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-400/25"
+          >
+            + Add Patient
+          </button>
+          <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold tracking-wide text-cyan-100">
+            Simulation Live
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:grid-cols-[1.3fr_1fr] lg:px-6">
+      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:grid-cols-[1.25fr_1fr] lg:px-6">
         <WardDashboard
           patients={patients}
           selectedPatientId={selectedPatient?.id ?? null}
           onSelectPatient={setSelectedPatientId}
+          onAddPatient={() => setIsAddPatientOpen(true)}
         />
 
-        <section className="rounded-2xl border border-slate-700/70 bg-app-panel p-4 shadow-lg shadow-black/30">
+        <section className="detail-panel rounded-2xl border border-slate-700/70 p-4 shadow-2xl shadow-black/35">
           {selectedPatient ? (
             <>
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className="text-lg font-semibold text-white lg:text-xl">
                     {selectedPatient.name}
                   </h2>
                   <p className="text-xs text-slate-300">
                     Bed {selectedPatient.bed} • Last update {selectedPatient.lastUpdated}
+                  </p>
+                  <p className="mt-1 text-xs text-slate-400">
+                    {selectedPatient.story || 'No clinical story available.'}
                   </p>
                 </div>
                 <RiskScore score={selectedPatient.riskScore} status={selectedPatient.status} />
               </div>
 
               <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-slate-100">
-                <div className="rounded-lg bg-app-card p-2">HR: {selectedPatient.currentVitals.hr}</div>
+                <div className="rounded-lg border border-slate-700/70 bg-app-card/80 p-2">
+                  HR: {selectedPatient.currentVitals.hr} bpm
+                </div>
                 <div className="rounded-lg bg-app-card p-2">
                   SpO2: {selectedPatient.currentVitals.spo2}%
                 </div>
-                <div className="rounded-lg bg-app-card p-2">RR: {selectedPatient.currentVitals.rr}</div>
+                <div className="rounded-lg border border-slate-700/70 bg-app-card/80 p-2">
+                  RR: {selectedPatient.currentVitals.rr} /min
+                </div>
                 <div className="rounded-lg bg-app-card p-2">
-                  Temp: {selectedPatient.currentVitals.temp}
+                  Temp: {selectedPatient.currentVitals.temp} F
                 </div>
                 <div className="col-span-2 rounded-lg bg-app-card p-2">
                   BP: {selectedPatient.currentVitals.bp}
@@ -167,6 +300,9 @@ function App() {
               </div>
 
               <div className="mb-4 rounded-xl bg-app-card p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                  Vitals Trend
+                </p>
                 <VitalsGraph history={selectedPatient.history} />
               </div>
 
@@ -179,7 +315,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => void requestAiExplanation(selectedPatient)}
-                  className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+                  className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
                 >
                   Explain Now
                 </button>
@@ -193,6 +329,14 @@ function App() {
           )}
         </section>
       </main>
+
+      {isAddPatientOpen ? (
+        <AddPatientModal
+          onClose={() => setIsAddPatientOpen(false)}
+          onSubmit={handleAddPatient}
+          suggestedBed={suggestedBed}
+        />
+      ) : null}
     </div>
   )
 }
