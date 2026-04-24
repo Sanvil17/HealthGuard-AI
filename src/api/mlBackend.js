@@ -12,12 +12,13 @@ function parseBp(bp) {
 }
 
 /**
- * Send current patient vitals to the ML backend and return the anomaly score.
+ * Send current patient vitals (including organ data) to the ML backend.
+ * Returns the full prediction: { anomaly_score, risk_score, is_anomaly }
  *
- * @param {object} vitals - { hr, spo2, rr, temp, bp }
- * @returns {Promise<number>} anomaly_score between 0 and 1, or 0 on failure
+ * @param {object} vitals - Full vitals object with organ data
+ * @returns {Promise<{ anomalyScore: number, riskScore: number, isAnomaly: boolean }>}
  */
-export async function getAnomalyScore(vitals) {
+export async function getMLPrediction(vitals) {
   try {
     const { systolic, diastolic } = parseBp(vitals.bp)
 
@@ -31,17 +32,33 @@ export async function getAnomalyScore(vitals) {
         temp: vitals.temp,
         bp_systolic: systolic,
         bp_diastolic: diastolic,
+        urine: vitals.urine ?? 40,
+        bilirubin: vitals.bilirubin ?? 1.0,
+        platelets: vitals.platelets ?? 150000,
+        confusion: vitals.confusion ? 1.0 : 0.0,
       }),
     })
 
     if (!response.ok) {
-      return 0
+      return { anomalyScore: 0, riskScore: 0, isAnomaly: false }
     }
 
     const data = await response.json()
-    return typeof data.anomaly_score === 'number' ? data.anomaly_score : 0
+    return {
+      anomalyScore: typeof data.anomaly_score === 'number' ? data.anomaly_score : 0,
+      riskScore: typeof data.risk_score === 'number' ? data.risk_score : 0,
+      isAnomaly: Boolean(data.is_anomaly),
+    }
   } catch {
-    // ML backend is not running — fall back to rule-based score only
-    return 0
+    // ML backend is not running — return zeros
+    return { anomalyScore: 0, riskScore: 0, isAnomaly: false }
   }
+}
+
+/**
+ * Legacy convenience wrapper — returns just the anomaly score (0-1).
+ */
+export async function getAnomalyScore(vitals) {
+  const prediction = await getMLPrediction(vitals)
+  return prediction.anomalyScore
 }

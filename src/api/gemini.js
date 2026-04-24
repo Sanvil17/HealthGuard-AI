@@ -75,15 +75,18 @@ export function buildPrompt(patient) {
   const spo2Trend = getTrend(history.map((entry) => Number(entry.spo2)))
   const lastNote = history.at(-1)?.note || 'No nurse notes recorded.'
 
+  const v = patient.currentVitals
+
   return [
     'You are assisting a nurse in a hospital ward.',
     'Write a short, clear clinical explanation in plain language.',
     'Keep it under 90 words. Mention immediate nursing action priority.',
     '',
     `Patient: ${patient.name} (${patient.bed})`,
-    `Risk Score: ${patient.riskScore} / 100`,
+    `Risk Score: ${patient.riskScore} / 100 (ML-driven)`,
     `Status: ${patient.status}`,
-    `Current vitals: HR ${patient.currentVitals.hr}, SpO2 ${patient.currentVitals.spo2}%, RR ${patient.currentVitals.rr}, Temp ${patient.currentVitals.temp} F, BP ${patient.currentVitals.bp}`,
+    `Current vitals: HR ${v.hr}, SpO2 ${v.spo2}%, RR ${v.rr}, Temp ${v.temp} F, BP ${v.bp}`,
+    `Organ data: Urine ${v.urine ?? '--'} ml/hr, Bilirubin ${v.bilirubin?.toFixed?.(1) ?? '--'}, Platelets ${v.platelets != null ? Math.round(v.platelets).toLocaleString() : '--'}, Confusion: ${v.confusion ? 'Yes' : 'No'}`,
     `HR trend: ${hrTrend}`,
     `SpO2 trend: ${spo2Trend}`,
     `Nurse note: ${lastNote}`,

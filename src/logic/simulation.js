@@ -1,5 +1,5 @@
-import { calculateRiskScore, calculateCombinedScore, getStatusFromScore } from './riskEngine.js'
-import { getAnomalyScore } from '../api/mlBackend.js'
+import { calculateRiskScore, getStatusFromScore } from './riskEngine.js'
+import { getMLPrediction } from '../api/mlBackend.js'
 
 let simulationTimeoutId = null
 
@@ -62,7 +62,7 @@ function updateStableVitals(current) {
 
     urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
     liverFlag: current.liverFlag ?? false,
-    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.2), 0.5, 5),
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.15, 0.15), 0.5, 5),
     eyeYellow: current.eyeYellow ?? false,
     platelets: clamp((current.platelets ?? 150000) + randInt(-2000, 2000), 20000, 300000),
     confusion: current.confusion ?? false,
@@ -234,21 +234,25 @@ async function evolvePatient(patient) {
   const history = [...previousHistory, entry].slice(-180)
   const simulationTicks = (patient.simulationTicks ?? 0) + 1
 
-  const ruleScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
-
-  // Call ML backend for anomaly score (falls back to 0 if backend is down)
-  const anomalyScore = await getAnomalyScore(vitals)
-
-  const riskScore = calculateCombinedScore(ruleScore, anomalyScore)
+  // ML-only scoring: get risk score directly from the ML backend
+  const mlPrediction = await getMLPrediction(vitals)
+  const riskScore = mlPrediction.riskScore
   const status = getStatusFromScore(riskScore)
+
+  // Store ML metadata for debugging/display
+  const anomalyScore = mlPrediction.anomalyScore
+  const isAnomaly = mlPrediction.isAnomaly
+
+  // Also store the entry's ML score so history cards can use it
+  entry.mlRiskScore = riskScore
 
   return {
     ...patient,
     currentVitals: vitals,
     history,
     riskScore,
-    ruleScore,
     anomalyScore,
+    isAnomaly,
     status,
     lastUpdated: entry.time,
     simulationTicks,

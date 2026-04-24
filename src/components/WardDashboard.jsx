@@ -9,17 +9,17 @@ function WardDashboard({ patients, selectedPatientId, onSelectPatient, onAddPati
   const slots = Array.from({ length: totalSlots }, (_, index) => patients[index] ?? null)
 
   return (
-    <section className="rounded-2xl border border-slate-700/70 bg-app-panel/95 p-4 shadow-2xl shadow-black/35">
+    <section className="dashboard-panel p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="font-display text-lg font-semibold text-white lg:text-xl">Ward Dashboard</h2>
+        <h2 className="text-lg font-semibold text-gray-900">Ward Dashboard</h2>
         <div className="flex flex-wrap gap-2 text-xs">
-          <span className="rounded-full bg-[#22C55E]/20 px-2 py-1 font-semibold text-[#B9F8CC]">
+          <span className="rounded-full bg-green-50 px-2 py-1 font-semibold text-green-600">
             Green: {statusCount(patients, 'green')}
           </span>
-          <span className="rounded-full bg-[#F5A623]/20 px-2 py-1 font-semibold text-[#FFE4B2]">
+          <span className="rounded-full bg-orange-50 px-2 py-1 font-semibold text-orange-500">
             Yellow: {statusCount(patients, 'yellow')}
           </span>
-          <span className="rounded-full bg-[#EF4444]/20 px-2 py-1 font-semibold text-[#FFD0D0]">
+          <span className="rounded-full bg-red-50 px-2 py-1 font-semibold text-red-500">
             Red: {statusCount(patients, 'red')}
           </span>
         </div>
@@ -29,7 +29,7 @@ function WardDashboard({ patients, selectedPatientId, onSelectPatient, onAddPati
         <button
           type="button"
           onClick={onAddPatient}
-          className="rounded-lg border border-cyan-300/60 bg-cyan-500/15 px-3 py-1.5 text-xs font-semibold text-cyan-100 transition hover:bg-cyan-400/20"
+          className="dashboard-button px-4 py-2 text-sm font-medium"
         >
           Add Patient
         </button>
@@ -41,7 +41,7 @@ function WardDashboard({ patients, selectedPatientId, onSelectPatient, onAddPati
             return (
               <div
                 key={`empty-${index}`}
-                className="flex min-h-[126px] items-center justify-center rounded-xl border border-dashed border-slate-600/70 bg-slate-900/35 text-center text-xs text-slate-400"
+                className="flex min-h-[126px] items-center justify-center rounded-xl border border-dashed border-gray-200 bg-white text-center text-xs text-gray-400"
               >
                 Empty Slot {index + 1}
               </div>
