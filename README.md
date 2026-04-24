@@ -2,7 +2,7 @@
 
 HealthGuard AI is a real-time deterioration prediction dashboard for hospital wards. It continuously monitors patient vital signs and organ data, utilizing Machine Learning to detect early signs of clinical deterioration. When a patient reaches a critical threshold, it leverages Google's Gemini AI to generate immediate, actionable clinical explanations for the nursing staff.
 
-![Dashboard Preview](screenshot.png) *(Note: You can add a screenshot here later)*
+
 
 ## 🌟 Key Features
 
