@@ -19,6 +19,8 @@ const fallbackVitals = {
   bp: '120/80',
 }
 
+const PATIENTS_STORAGE_KEY = 'healthguard-ai-patients'
+
 function getClockTime() {
   return new Date().toLocaleTimeString([], {
     hour: '2-digit',
@@ -119,8 +121,31 @@ function hydratePatients(seedPatients) {
   })
 }
 
+function loadInitialPatients() {
+  if (typeof window === 'undefined') {
+    return hydratePatients(mockPatients)
+  }
+
+  const storedPatients = window.localStorage.getItem(PATIENTS_STORAGE_KEY)
+  if (!storedPatients) {
+    return hydratePatients(mockPatients)
+  }
+
+  try {
+    const parsedPatients = JSON.parse(storedPatients)
+    if (!Array.isArray(parsedPatients)) {
+      throw new Error('Stored patient data must be an array.')
+    }
+
+    return hydratePatients(parsedPatients)
+  } catch {
+    window.localStorage.removeItem(PATIENTS_STORAGE_KEY)
+    return hydratePatients(mockPatients)
+  }
+}
+
 function App() {
-  const [patients, setPatients] = useState(() => hydratePatients(mockPatients))
+  const [patients, setPatients] = useState(loadInitialPatients)
   const [selectedPatientId, setSelectedPatientId] = useState(
     () => mockPatients[0]?.id ?? null,
   )
@@ -130,6 +155,11 @@ function App() {
 
   const autoTriggeredInRedRef = useRef(new Set())
   const aiInFlightRef = useRef(new Set())
+  const aiRequestSessionRef = useRef(0)
+
+  useEffect(() => {
+    window.localStorage.setItem(PATIENTS_STORAGE_KEY, JSON.stringify(patients))
+  }, [patients])
 
   const selectedPatient = useMemo(() => {
     return patients.find((patient) => patient.id === selectedPatientId) ?? patients[0] ?? null
@@ -140,11 +170,16 @@ function App() {
       return
     }
 
+    const requestSession = aiRequestSessionRef.current
     aiInFlightRef.current.add(patient.id)
     setAiLoadingByPatient((previous) => ({ ...previous, [patient.id]: true }))
 
     try {
       const explanation = await generateClinicalExplanation(patient)
+      if (requestSession !== aiRequestSessionRef.current) {
+        return
+      }
+
       setPatients((previousPatients) => {
         return previousPatients.map((item) => {
           if (item.id !== patient.id) {
@@ -192,6 +227,18 @@ function App() {
   }, [requestAiExplanation])
 
   const suggestedBed = useMemo(() => getNextBedId(patients), [patients])
+
+  const handleResetWard = useCallback(() => {
+    aiRequestSessionRef.current += 1
+    autoTriggeredInRedRef.current.clear()
+    aiInFlightRef.current.clear()
+    window.localStorage.removeItem(PATIENTS_STORAGE_KEY)
+    setPatients(hydratePatients(mockPatients))
+    setSelectedPatientId(mockPatients[0]?.id ?? null)
+    setActiveAlert(null)
+    setAiLoadingByPatient({})
+    setIsAddPatientOpen(false)
+  }, [])
 
   const handleAddPatient = useCallback(
     (draftPatient) => {
@@ -242,6 +289,13 @@ function App() {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={handleResetWard}
+            className="rounded-xl border border-slate-500/80 bg-slate-800/50 px-4 py-2 text-sm font-semibold text-slate-100 transition hover:border-rose-300/80 hover:bg-rose-500/15 hover:text-rose-50"
+          >
+            Reset Ward
+          </button>
           <button
             type="button"
             onClick={() => setIsAddPatientOpen(true)}

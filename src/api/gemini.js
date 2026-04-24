@@ -1,18 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const FALLBACK_MODELS = [
+  'gemini-2.5-pro',
   'gemini-2.5-flash-lite',
   'gemini-2.5-flash',
+  'gemini-2.0-pro',
   'gemini-2.0-flash',
   'gemini-2.0-flash-lite',
+  'gemini-1.5-pro-latest',
+  'gemini-1.5-pro',
   'gemini-1.5-flash-latest',
   'gemini-1.5-flash',
+  'gemini-pro',
 ]
 
 let resolvedModelName = null
 
 function getClient() {
-  const apiKey = import.meta.env?.VITE_GEMINI_API_KEY
+  const apiKey = import.meta.env?.VITE_GEMINI_API_KEY?.trim()
   if (!apiKey) {
     return null
   }
@@ -32,6 +37,19 @@ function isModelUnavailableError(error) {
     message.includes('not found')
     || message.includes('not supported for generatecontent')
     || message.includes('[404')
+  )
+}
+
+function isApiKeyError(error) {
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  return (
+    message.includes('api key')
+    || message.includes('permission')
+    || message.includes('forbidden')
+    || message.includes('[403')
+    || message.includes('leaked')
+    || message.includes('unauthorized')
+    || message.includes('[401')
   )
 }
 
@@ -104,6 +122,11 @@ export async function generateClinicalExplanation(patient) {
       lastError = error
       continue
     }
+  }
+
+  if (lastError && isApiKeyError(lastError)) {
+    const message = lastError instanceof Error ? lastError.message : ''
+    return `AI explanation unavailable: API key error — ${message}. Please generate a new key at https://aistudio.google.com/apikey and update VITE_GEMINI_API_KEY in .env.`
   }
 
   if (!resolvedModelName && isModelUnavailableError(lastError)) {
