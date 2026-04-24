@@ -156,8 +156,10 @@ function App() {
   const autoTriggeredInRedRef = useRef(new Set())
   const aiInFlightRef = useRef(new Set())
   const aiRequestSessionRef = useRef(0)
+  const patientsRef = useRef(patients)
 
   useEffect(() => {
+    patientsRef.current = patients
     window.localStorage.setItem(PATIENTS_STORAGE_KEY, JSON.stringify(patients))
   }, [patients])
 
@@ -209,6 +211,7 @@ function App() {
   useEffect(() => {
     startSimulation(setPatients, {
       intervalMs: 5000,
+      patientsRef,
       onPatientTurnedRed: (patient) => {
         setActiveAlert(createAlertPayload(patient))
 

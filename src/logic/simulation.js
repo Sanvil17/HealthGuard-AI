@@ -1,6 +1,7 @@
-import { calculateRiskScore, getStatusFromScore } from './riskEngine.js'
+import { calculateRiskScore, calculateCombinedScore, getStatusFromScore } from './riskEngine.js'
+import { getAnomalyScore } from '../api/mlBackend.js'
 
-let simulationIntervalId = null
+let simulationTimeoutId = null
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
@@ -168,14 +169,19 @@ function nextHistoryEntry(vitals, previousEntry) {
   }
 }
 
-function evolvePatient(patient) {
+async function evolvePatient(patient) {
   const vitals = updatePatientVitals(patient)
   const previousHistory = Array.isArray(patient.history) ? patient.history : []
   const entry = nextHistoryEntry(vitals, previousHistory.at(-1))
   const history = [...previousHistory, entry].slice(-180)
   const simulationTicks = (patient.simulationTicks ?? 0) + 1
 
-  const riskScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
+  const ruleScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
+
+  // Call ML backend for anomaly score (falls back to 0 if backend is down)
+  const anomalyScore = await getAnomalyScore(vitals)
+
+  const riskScore = calculateCombinedScore(ruleScore, anomalyScore)
   const status = getStatusFromScore(riskScore)
 
   return {
@@ -183,32 +189,42 @@ function evolvePatient(patient) {
     currentVitals: vitals,
     history,
     riskScore,
+    ruleScore,
+    anomalyScore,
     status,
     lastUpdated: entry.time,
     simulationTicks,
   }
 }
 
-export function runSimulationCycle(patients) {
+export async function runSimulationCycle(patients) {
   if (!Array.isArray(patients)) {
     return []
   }
 
-  return patients.map(evolvePatient)
+  return Promise.all(patients.map(evolvePatient))
 }
 
 export function startSimulation(setPatients, options = {}) {
-  if (simulationIntervalId) {
-    return simulationIntervalId
+  if (simulationTimeoutId) {
+    return simulationTimeoutId
   }
 
-  const { intervalMs = 5000, onPatientTurnedRed } = options
+  const { intervalMs = 5000, onPatientTurnedRed, patientsRef } = options
 
-  simulationIntervalId = setInterval(() => {
-    setPatients((previousPatients) => {
-      const previousById = new Map(previousPatients.map((patient) => [patient.id, patient]))
-      const nextPatients = runSimulationCycle(previousPatients)
+  async function tick() {
+    // Read the latest patients from the ref (kept in sync by App.jsx)
+    const previousPatients = patientsRef ? patientsRef.current : []
 
+    if (!previousPatients || previousPatients.length === 0) {
+      simulationTimeoutId = setTimeout(tick, intervalMs)
+      return
+    }
+
+    const previousById = new Map(previousPatients.map((patient) => [patient.id, patient]))
+    const nextPatients = await runSimulationCycle(previousPatients)
+
+    setPatients(() => {
       if (typeof onPatientTurnedRed === 'function') {
         const escalatedPatients = nextPatients.filter((nextPatient) => {
           const previous = previousById.get(nextPatient.id)
@@ -224,20 +240,25 @@ export function startSimulation(setPatients, options = {}) {
 
       return nextPatients
     })
-  }, intervalMs)
 
-  return simulationIntervalId
+    // Schedule next tick
+    simulationTimeoutId = setTimeout(tick, intervalMs)
+  }
+
+  // Start the first tick
+  simulationTimeoutId = setTimeout(tick, intervalMs)
+  return simulationTimeoutId
 }
 
 export function stopSimulation() {
-  if (!simulationIntervalId) {
+  if (!simulationTimeoutId) {
     return
   }
 
-  clearInterval(simulationIntervalId)
-  simulationIntervalId = null
+  clearTimeout(simulationTimeoutId)
+  simulationTimeoutId = null
 }
 
 export function isSimulationRunning() {
-  return simulationIntervalId !== null
+  return simulationTimeoutId !== null
 }

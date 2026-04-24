@@ -93,3 +93,17 @@ export function getStatusFromScore(score) {
   }
   return 'green'
 }
+
+/**
+ * Blend the rule-based score with the ML anomaly score.
+ *
+ * Formula: final = (ruleScore × 0.6) + (anomalyScore × 100 × 0.4)
+ *
+ * @param {number} ruleScore - Rule-based score (0–100)
+ * @param {number} anomalyScore - ML anomaly score (0–1)
+ * @returns {number} Combined score clamped to 0–100
+ */
+export function calculateCombinedScore(ruleScore, anomalyScore) {
+  const combined = (ruleScore * 0.6) + (anomalyScore * 100 * 0.4)
+  return Math.min(100, Math.max(0, Math.round(combined)))
+}
