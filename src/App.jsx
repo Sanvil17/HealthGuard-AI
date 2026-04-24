@@ -197,6 +197,7 @@ function App() {
   const [activeAlert, setActiveAlert] = useState(null)
   const [isAddPatientOpen, setIsAddPatientOpen] = useState(false)
   const [nurseNoteDrafts, setNurseNoteDrafts] = useState({})
+  const [nurseNotePanelOpen, setNurseNotePanelOpen] = useState({})
   const [aiLoadingByPatient, setAiLoadingByPatient] = useState({})
 
   const autoTriggeredInRedRef = useRef(new Set())
@@ -324,6 +325,18 @@ function App() {
     }))
   }, [nurseNoteDrafts, selectedPatientId])
 
+  const toggleNurseNotePanel = useCallback((patientId) => {
+    setNurseNotePanelOpen((previous) => ({
+      ...previous,
+      [patientId]: !previous[patientId],
+    }))
+  }, [])
+
+  const isSelectedPatientCritical = selectedPatient?.status === 'red'
+  const isSelectedPatientNotePanelOpen = Boolean(
+    selectedPatient && (isSelectedPatientCritical || nurseNotePanelOpen[selectedPatient.id]),
+  )
+
   return (
     <div className="min-h-screen bg-[#F9FAFB] text-gray-900">
       <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
@@ -419,54 +432,63 @@ function App() {
                 </div>
 
                 <div className="mb-4 dashboard-card p-4">
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                        Nurse Visit Note
-                      </p>
-                      <p className="mt-1 text-xs text-gray-400">
-                        Log observations every time you visit this patient.
-                      </p>
-                    </div>
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600">
-                      Quick Log
-                    </span>
-                  </div>
-
-                  <textarea
-                    value={nurseNoteDrafts[selectedPatient.id] ?? ''}
-                    onChange={(event) => {
-                      const value = event.target.value
-                      setNurseNoteDrafts((previous) => ({
-                        ...previous,
-                        [selectedPatient.id]: value,
-                      }))
-                    }}
-                    placeholder="Example: Patient resting comfortably, vitals stable, continue monitoring."
-                    className="min-h-24 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
-                  />
-
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <p className="text-xs text-gray-400">
-                      This note will be added to the patient history and timestamped.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleSaveNurseNote}
-                      className="dashboard-button px-4 py-2 text-sm font-medium"
-                    >
-                      Save Visit Note
-                    </button>
-                  </div>
-                </div>
-
-                <div className="mb-4 dashboard-card p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
                       History & Nurse Notes
                     </p>
-                    <span className="text-xs text-gray-400">Latest entries from this patient</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-gray-400">Latest entries from this patient</span>
+                      {isSelectedPatientCritical ? (
+                        <span className="rounded-full bg-red-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-red-600">
+                          Critical note open
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => toggleNurseNotePanel(selectedPatient.id)}
+                          className="rounded-full bg-emerald-50 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-emerald-600 transition hover:bg-emerald-100"
+                        >
+                          {nurseNotePanelOpen[selectedPatient.id] ? 'Hide note' : 'Add note'}
+                        </button>
+                      )}
+                    </div>
                   </div>
+
+                  {isSelectedPatientNotePanelOpen ? (
+                    <div className="mb-4 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        Nurse Visit Note
+                      </p>
+                      <p className="mb-3 text-xs text-emerald-700/80">
+                        Use this for scheduled hourly rounds or whenever the patient needs a warning check.
+                      </p>
+                      <textarea
+                        value={nurseNoteDrafts[selectedPatient.id] ?? ''}
+                        onChange={(event) => {
+                          const value = event.target.value
+                          setNurseNoteDrafts((previous) => ({
+                            ...previous,
+                            [selectedPatient.id]: value,
+                          }))
+                        }}
+                        placeholder="Example: Patient resting comfortably, vitals stable, continue monitoring."
+                        className="min-h-24 w-full rounded-xl border border-emerald-100 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
+                      />
+
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-xs text-emerald-700/70">
+                          Saving will timestamp this note into the patient history.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handleSaveNurseNote}
+                          className="dashboard-button px-4 py-2 text-sm font-medium"
+                        >
+                          Save Visit Note
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className="max-h-72 space-y-3 overflow-y-auto pr-1">
                     {selectedPatient.history
