@@ -76,38 +76,36 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
     })
   }
 
-  const inputClasses = 'w-full rounded-lg border border-slate-600 bg-slate-900/60 px-3 py-2 text-sm text-white outline-none transition focus:border-cyan-300/80'
-
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-black/30 px-4 py-8"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="w-full max-w-2xl rounded-2xl border border-slate-600/70 bg-[#102236] p-4 shadow-2xl shadow-black/50"
+        className="w-full max-w-2xl rounded-xl border border-gray-200 bg-white p-5 shadow-lg"
         onClick={(event) => event.stopPropagation()}
         role="presentation"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-display text-xl font-semibold text-white">Add Patient</h3>
-            <p className="text-xs text-slate-300">New patient joins the live simulation stream instantly.</p>
+            <h3 className="text-xl font-semibold text-gray-900">Add Patient</h3>
+            <p className="text-xs text-gray-500">New patient joins the live simulation stream instantly.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-500 px-2 py-1 text-xs text-slate-200 transition hover:bg-slate-700/50"
+            className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Close
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-3 md:grid-cols-2">
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             Name
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               value={draft.name}
               onChange={(event) => handleFieldChange('name', event.target.value)}
               placeholder="Patient name"
@@ -115,10 +113,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             Bed
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               value={draft.bed}
               onChange={(event) => handleFieldChange('bed', event.target.value)}
               placeholder="B06"
@@ -126,10 +124,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             Pattern
             <select
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               value={draft.pattern}
               onChange={(event) => handleFieldChange('pattern', event.target.value)}
             >
@@ -139,20 +137,20 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             </select>
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             Blood Pressure
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               value={draft.currentVitals.bp}
               onChange={(event) => handleVitalsChange('bp', event.target.value)}
               placeholder="120/80"
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             HR
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               type="number"
               min="30"
               max="220"
@@ -161,10 +159,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             SpO2
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               type="number"
               min="50"
               max="100"
@@ -173,10 +171,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             RR
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               type="number"
               min="8"
               max="40"
@@ -185,10 +183,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300">
+          <label className="text-xs text-gray-600">
             Temperature (F)
             <input
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               type="number"
               min="94"
               max="106"
@@ -198,10 +196,10 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             />
           </label>
 
-          <label className="text-xs text-slate-300 md:col-span-2">
+          <label className="text-xs text-gray-600 md:col-span-2">
             Nurse Note (optional)
             <textarea
-              className={inputClasses}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
               rows="2"
               value={draft.note}
               onChange={(event) => handleFieldChange('note', event.target.value)}
@@ -213,13 +211,13 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-500 px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-700/40"
+              className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
             >
               Add to Ward
             </button>
