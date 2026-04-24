@@ -16,6 +16,14 @@ const fallbackVitals = {
   rr: 16,
   temp: 98.6,
   bp: '120/80',
+  urine: 40,
+  liverFlag: false,
+  bilirubin: 1.0,
+  eyeYellow: false,
+
+  // ✅ NEW
+  platelets: 150000,
+  confusion: false,
 }
 
 function hydratePatients(seedPatients) {
@@ -51,10 +59,29 @@ function App() {
     return patients.find((patient) => patient.id === selectedPatientId) ?? patients[0] ?? null
   }, [patients, selectedPatientId])
 
+  const current = selectedPatient?.currentVitals ?? {}
+
+  const kidneyRisk =
+    current.urine !== undefined && current.urine < 30
+
+  const heartRisk =
+    current.hr > 110 ||
+    (current.hr > 100 && current.spo2 < 94)
+
+  const liverRisk =
+    current.liverFlag ||
+    current.eyeYellow ||
+    (current.bilirubin !== undefined && current.bilirubin > 2)
+
+  // ✅ NEW
+  const plateletRisk =
+    current.platelets !== undefined && current.platelets < 100000
+
+  const brainRisk =
+    current.confusion === true
+
   const requestAiExplanation = useCallback(async (patient) => {
-    if (!patient || aiInFlightRef.current.has(patient.id)) {
-      return
-    }
+    if (!patient || aiInFlightRef.current.has(patient.id)) return
 
     aiInFlightRef.current.add(patient.id)
     setAiLoadingByPatient((previous) => ({ ...previous, [patient.id]: true }))
@@ -63,14 +90,8 @@ function App() {
       const explanation = await generateClinicalExplanation(patient)
       setPatients((previousPatients) => {
         return previousPatients.map((item) => {
-          if (item.id !== patient.id) {
-            return item
-          }
-
-          return {
-            ...item,
-            aiExplanation: explanation,
-          }
+          if (item.id !== patient.id) return item
+          return { ...item, aiExplanation: explanation }
         })
       })
     } finally {
@@ -98,39 +119,22 @@ function App() {
           time: new Date().toLocaleTimeString(),
         })
 
-        if (autoTriggeredInRedRef.current.has(patient.id)) {
-          return
-        }
+        if (autoTriggeredInRedRef.current.has(patient.id)) return
 
         autoTriggeredInRedRef.current.add(patient.id)
         void requestAiExplanation(patient)
       },
     })
 
-    return () => {
-      stopSimulation()
-    }
+    return () => stopSimulation()
   }, [requestAiExplanation])
 
   return (
     <div className="min-h-screen bg-app-bg text-slate-100">
       <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
 
-      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-6 lg:px-6">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white lg:text-3xl">
-            HealthGuard AI
-          </h1>
-          <p className="text-sm text-slate-300">
-            Real-time deterioration prediction for ward patients.
-          </p>
-        </div>
-        <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs text-cyan-100">
-          Simulation Live
-        </div>
-      </header>
-
       <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:grid-cols-[1.3fr_1fr] lg:px-6">
+
         <WardDashboard
           patients={patients}
           selectedPatientId={selectedPatient?.id ?? null}
@@ -138,60 +142,71 @@ function App() {
         />
 
         <section className="rounded-2xl border border-slate-700/70 bg-app-panel p-4 shadow-lg shadow-black/30">
-          {selectedPatient ? (
+          {selectedPatient && (
             <>
-              <div className="mb-4 flex items-start justify-between">
-                <div>
-                  <h2 className="text-lg font-semibold text-white">
-                    {selectedPatient.name}
-                  </h2>
-                  <p className="text-xs text-slate-300">
-                    Bed {selectedPatient.bed} • Last update {selectedPatient.lastUpdated}
-                  </p>
+              <RiskScore score={selectedPatient.riskScore} status={selectedPatient.status} />
+
+              <div className="grid grid-cols-2 gap-2">
+
+                <div className="bg-app-card p-2">
+                  Urine: {(current.urine ?? '--')}
                 </div>
-                <RiskScore score={selectedPatient.riskScore} status={selectedPatient.status} />
+
+                <div className="bg-app-card p-2">
+                  Kidney: {kidneyRisk ? "🚨 Risk" : "Normal"}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  Heart: {heartRisk ? "🚨 Risk" : "Normal"}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  Liver: {liverRisk ? "🚨 Risk" : "Normal"}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  Bilirubin: {current.bilirubin ?? '--'}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  Eyes: {current.eyeYellow ? "⚠️ Yellow" : "Normal"}
+                </div>
+
+                {/* ✅ NEW */}
+                <div className="bg-app-card p-2">
+                  Platelets: {current.platelets ?? '--'}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  Brain: {brainRisk ? "🚨 Confused" : "Normal"}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  HR: {current.hr}
+                </div>
+
+                <div className="bg-app-card p-2">
+                  SpO2: {current.spo2}
+                </div>
+
               </div>
 
-              <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-slate-100">
-                <div className="rounded-lg bg-app-card p-2">HR: {selectedPatient.currentVitals.hr}</div>
-                <div className="rounded-lg bg-app-card p-2">
-                  SpO2: {selectedPatient.currentVitals.spo2}%
-                </div>
-                <div className="rounded-lg bg-app-card p-2">RR: {selectedPatient.currentVitals.rr}</div>
-                <div className="rounded-lg bg-app-card p-2">
-                  Temp: {selectedPatient.currentVitals.temp}
-                </div>
-                <div className="col-span-2 rounded-lg bg-app-card p-2">
-                  BP: {selectedPatient.currentVitals.bp}
-                </div>
-              </div>
-
-              <div className="mb-4 rounded-xl bg-app-card p-3">
-                <VitalsGraph history={selectedPatient.history} />
-              </div>
+              <VitalsGraph history={selectedPatient.history} />
 
               <AIExplanation
                 explanation={selectedPatient.aiExplanation}
                 loading={Boolean(aiLoadingByPatient[selectedPatient.id])}
               />
 
-              <div className="mt-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => void requestAiExplanation(selectedPatient)}
-                  className="rounded-lg bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-                >
-                  Explain Now
-                </button>
-                <ReportButton patient={selectedPatient} />
-              </div>
+              <button onClick={() => requestAiExplanation(selectedPatient)}>
+                Explain
+              </button>
+
+              <ReportButton patient={selectedPatient} />
             </>
-          ) : (
-            <div className="rounded-xl border border-slate-700 bg-app-card p-4 text-sm text-slate-300">
-              Select a patient to see details.
-            </div>
           )}
         </section>
+
       </main>
     </div>
   )

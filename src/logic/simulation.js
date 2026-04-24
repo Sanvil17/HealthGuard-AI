@@ -58,6 +58,16 @@ function updateStableVitals(current) {
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'stable'),
+
+    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.2), 0.5, 5),
+    eyeYellow: current.eyeYellow ?? false,
+
+    // ✅ NEW
+    platelets: clamp((current.platelets ?? 150000) + randInt(-2000, 2000), 20000, 300000),
+    confusion: current.confusion ?? false,
   }
 }
 
@@ -73,59 +83,20 @@ function updateRecoveringVitals(current) {
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'recovering'),
+
+    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+
+    bilirubin: clamp((current.bilirubin ?? 1.0) - randFloat(0, 0.1), 0.5, 5),
+    eyeYellow: current.eyeYellow ?? false,
+
+    // ✅ NEW
+    platelets: clamp((current.platelets ?? 150000) + randInt(2000, 5000), 20000, 300000),
+    confusion: false,
   }
 }
 
-function updateDemoDeterioratingVitals(current, ticks) {
-  if (ticks < 24) {
-    const hr = clamp(current.hr + randInt(-1, 1), 88, 97)
-    const spo2 = clamp(current.spo2 + randInt(-1, 1), 95, 98)
-    const rr = clamp(current.rr + randInt(-1, 1), 16, 20)
-    const temp = clamp(current.temp + randFloat(-0.1, 0.1), 98.4, 99.1)
-
-    return {
-      hr,
-      spo2,
-      rr,
-      temp,
-      bp: nextBloodPressure(current.bp, hr, 'stable'),
-    }
-  }
-
-  if (ticks < 36) {
-    const hr = clamp(current.hr + randInt(1, 2), 90, 102)
-    const spo2 = clamp(current.spo2 - randInt(0, 1), 94, 97)
-    const rr = clamp(current.rr + randInt(0, 1), 17, 22)
-    const temp = clamp(current.temp + randFloat(0, 0.1), 98.6, 99.5)
-
-    return {
-      hr,
-      spo2,
-      rr,
-      temp,
-      bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
-    }
-  }
-
-  const hr = clamp(current.hr + randInt(2, 4), 95, 176)
-  const spo2 = clamp(current.spo2 - randInt(1, 2), 78, 96)
-  const rr = clamp(current.rr + randInt(1, 2), 18, 36)
-  const temp = clamp(current.temp + randFloat(0.1, 0.3), 98.8, 103.5)
-
-  return {
-    hr,
-    spo2,
-    rr,
-    temp,
-    bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
-  }
-}
-
-function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
-  if (speed === 'demo') {
-    return updateDemoDeterioratingVitals(current, ticks)
-  }
-
+function updateDeterioratingVitals(current, speed = 'normal') {
   const fast = speed === 'fast'
 
   const hr = clamp(current.hr + randInt(fast ? 3 : 2, fast ? 6 : 5), 65, 180)
@@ -133,21 +104,32 @@ function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
   const rr = clamp(current.rr + randInt(1, fast ? 3 : 2), 14, 36)
   const temp = clamp(current.temp + randFloat(0.1, fast ? 0.4 : 0.3), 97.8, 103.5)
 
+  const newPlatelets = clamp((current.platelets ?? 150000) - randInt(5000, 15000), 10000, 300000)
+
   return {
     hr,
     spo2,
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
+
+    urine: clamp((current.urine ?? 40) - randInt(1, 4), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0.2, 0.5), 0.5, 5),
+    eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
+
+    // ✅ NEW
+    platelets: newPlatelets,
+    confusion: newPlatelets < 50000 ? true : current.confusion,
   }
 }
 
 function updatePatientVitals(patient) {
   const current = patient.currentVitals
-  const ticks = patient.simulationTicks ?? 0
 
   if (patient.pattern === 'deteriorating') {
-    return updateDeterioratingVitals(current, patient.deteriorationSpeed, ticks)
+    return updateDeterioratingVitals(current, patient.deteriorationSpeed)
   }
   if (patient.pattern === 'recovering') {
     return updateRecoveringVitals(current)
@@ -164,16 +146,31 @@ function nextHistoryEntry(vitals, previousEntry) {
     rr: vitals.rr,
     temp: vitals.temp,
     bp: vitals.bp,
+
+    urine: vitals.urine,
+    liverFlag: vitals.liverFlag,
+
+    bilirubin: vitals.bilirubin,
+    eyeYellow: vitals.eyeYellow,
+
+    // ✅ NEW
+    platelets: vitals.platelets,
+    confusion: vitals.confusion,
+
     note: previousEntry?.note ?? '',
   }
 }
 
 function evolvePatient(patient) {
   const vitals = updatePatientVitals(patient)
+
+  if (Math.random() < 0.02) {
+    vitals.liverFlag = true
+  }
+
   const previousHistory = Array.isArray(patient.history) ? patient.history : []
   const entry = nextHistoryEntry(vitals, previousHistory.at(-1))
   const history = [...previousHistory, entry].slice(-180)
-  const simulationTicks = (patient.simulationTicks ?? 0) + 1
 
   const riskScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
   const status = getStatusFromScore(riskScore)
@@ -185,28 +182,22 @@ function evolvePatient(patient) {
     riskScore,
     status,
     lastUpdated: entry.time,
-    simulationTicks,
   }
 }
 
 export function runSimulationCycle(patients) {
-  if (!Array.isArray(patients)) {
-    return []
-  }
-
+  if (!Array.isArray(patients)) return []
   return patients.map(evolvePatient)
 }
 
 export function startSimulation(setPatients, options = {}) {
-  if (simulationIntervalId) {
-    return simulationIntervalId
-  }
+  if (simulationIntervalId) return simulationIntervalId
 
   const { intervalMs = 5000, onPatientTurnedRed } = options
 
   simulationIntervalId = setInterval(() => {
     setPatients((previousPatients) => {
-      const previousById = new Map(previousPatients.map((patient) => [patient.id, patient]))
+      const previousById = new Map(previousPatients.map((p) => [p.id, p]))
       const nextPatients = runSimulationCycle(previousPatients)
 
       if (typeof onPatientTurnedRed === 'function') {
@@ -217,7 +208,7 @@ export function startSimulation(setPatients, options = {}) {
 
         if (escalatedPatients.length > 0) {
           queueMicrotask(() => {
-            escalatedPatients.forEach((patient) => onPatientTurnedRed(patient))
+            escalatedPatients.forEach((p) => onPatientTurnedRed(p))
           })
         }
       }
@@ -230,10 +221,7 @@ export function startSimulation(setPatients, options = {}) {
 }
 
 export function stopSimulation() {
-  if (!simulationIntervalId) {
-    return
-  }
-
+  if (!simulationIntervalId) return
   clearInterval(simulationIntervalId)
   simulationIntervalId = null
 }

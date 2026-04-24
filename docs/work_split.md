@@ -1,4 +1,4 @@
-I AM PERSON A 
+I AM PERSON c 
 
 # ⚡ HealthGuard AI — 24HR Team Work Split
 ### Athernex 2025 Hackathon
