@@ -80,24 +80,24 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 px-4 py-8 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/70 px-4 py-8"
       onClick={onClose}
       role="presentation"
     >
       <div
-        className="w-full max-w-2xl rounded-2xl border border-slate-600/70 bg-[#102236] p-4 shadow-2xl shadow-black/50"
+        className="w-full max-w-2xl rounded-xl border border-white/5 bg-[#0F172A] p-4 shadow-lg shadow-black/20"
         onClick={(event) => event.stopPropagation()}
         role="presentation"
       >
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h3 className="font-display text-xl font-semibold text-white">Add Patient</h3>
-            <p className="text-xs text-slate-300">New patient joins the live simulation stream instantly.</p>
+            <h3 className="text-xl font-semibold text-white">Add Patient</h3>
+            <p className="text-xs text-gray-400">New patient joins the live simulation stream instantly.</p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-slate-500 px-2 py-1 text-xs text-slate-200 transition hover:bg-slate-700/50"
+            className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
             Close
           </button>
@@ -213,13 +213,13 @@ function AddPatientModal({ onClose, onSubmit, suggestedBed }) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-lg border border-slate-500 px-3 py-2 text-sm text-slate-200 transition hover:bg-slate-700/40"
+              className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="rounded-lg bg-cyan-400 px-4 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+              className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
             >
               Add to Ward
             </button>

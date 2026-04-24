@@ -3,18 +3,18 @@ import clsx from 'clsx'
 const statusMeta = {
   green: {
     label: 'Stable',
-    frame: 'border-[#22C55E]/45 bg-[#22C55E]/12',
-    badge: 'bg-[#22C55E]/20 text-[#B9F8CC]',
+    frame: 'border-white/5 bg-[#0F172A]',
+    badge: 'bg-green-500/10 text-green-400',
   },
   yellow: {
     label: 'Warning',
-    frame: 'border-[#F5A623]/45 bg-[#F5A623]/10',
-    badge: 'bg-[#F5A623]/20 text-[#FFE4B2]',
+    frame: 'border-white/5 bg-[#0F172A]',
+    badge: 'bg-orange-500/10 text-orange-400',
   },
   red: {
     label: 'Critical',
-    frame: 'border-[#EF4444]/45 bg-[#EF4444]/12 card-alert-pulse',
-    badge: 'bg-[#EF4444]/20 text-[#FFD0D0]',
+    frame: 'border-red-500/20 bg-red-500/10',
+    badge: 'bg-red-500/10 text-red-500',
   },
 }
 
@@ -26,9 +26,9 @@ function PatientCard({ patient, selected, onSelect }) {
       type="button"
       onClick={onSelect}
       className={clsx(
-        'rounded-xl border p-3 text-left transition duration-200 hover:border-cyan-300/80 hover:bg-slate-800/80',
+        'rounded-xl border p-4 text-left transition-all duration-200 hover:border-white/10 hover:shadow-lg hover:shadow-black/20',
         meta.frame,
-        selected && 'ring-2 ring-cyan-300/80',
+        selected && 'ring-1 ring-white/10',
       )}
     >
       <div className="mb-2 flex items-start justify-between gap-2">
@@ -36,7 +36,7 @@ function PatientCard({ patient, selected, onSelect }) {
           <div className="text-sm font-semibold text-white">{patient.name}</div>
           <div className="text-xs text-slate-200/85">Bed {patient.bed}</div>
         </div>
-        <div className="rounded-full border border-white/20 px-2 py-0.5 text-xs font-semibold text-white/95">
+        <div className="rounded-full border border-white/10 px-2 py-0.5 text-xs font-semibold text-white/90">
           Risk {patient.riskScore}
         </div>
       </div>
@@ -45,7 +45,7 @@ function PatientCard({ patient, selected, onSelect }) {
         <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.14em]', meta.badge)}>
           {meta.label}
         </span>
-        <span className="text-[10px] text-slate-300">Updated {patient.lastUpdated || 'Now'}</span>
+        <span className="text-[10px] text-gray-400">Updated {patient.lastUpdated || 'Now'}</span>
       </div>
 
       <div className="grid grid-cols-3 gap-1 text-xs text-slate-100">

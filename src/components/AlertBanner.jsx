@@ -16,13 +16,15 @@ function AlertBanner({ alert, onClose }) {
 
   return (
     <div className="fixed left-0 right-0 top-0 z-50 flex justify-center px-4 pt-4">
-      <div className="alert-drop w-full max-w-4xl rounded-xl border border-rose-300/70 bg-gradient-to-r from-rose-700 via-rose-600 to-red-700 px-4 py-3 text-sm text-white shadow-2xl shadow-rose-950/70">
+      <div className="w-full max-w-4xl rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-white shadow-lg shadow-black/20">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 rounded-full bg-white/20 px-2 py-0.5 text-xs font-bold">ALERT</span>
+            <span className="mt-0.5 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">ALERT</span>
             <div>
-              <p className="text-sm font-bold uppercase tracking-[0.14em]">Critical Patient Escalation</p>
-              <p className="text-sm text-rose-50">
+              <p className="text-sm font-semibold uppercase tracking-[0.12em] text-white">
+                Critical Patient Escalation
+              </p>
+              <p className="text-sm text-gray-200">
                 {alert.patientName} reached risk score {alert.score} at {alert.time}. Immediate clinical
                 assessment is recommended.
               </p>
@@ -32,14 +34,14 @@ function AlertBanner({ alert, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md border border-white/35 px-2 py-1 text-xs font-semibold text-white transition hover:bg-white/15"
+            className="rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-400"
           >
             Dismiss
           </button>
         </div>
 
-        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/25">
-          <div className="alert-timer-bar h-full rounded-full bg-white/80" />
+        <div className="mt-3 h-1 w-full overflow-hidden rounded-full bg-white/10">
+          <div className="h-full w-full rounded-full bg-blue-400/70" />
         </div>
       </div>
     </div>

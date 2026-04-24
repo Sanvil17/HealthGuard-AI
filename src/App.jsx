@@ -213,49 +213,34 @@ function App() {
   )
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-app-bg text-slate-100">
-      <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="atmo-orb atmo-orb-a" />
-        <div className="atmo-orb atmo-orb-b" />
-        <div className="atmo-orb atmo-orb-c" />
-      </div>
-
+    <div className="min-h-screen bg-[#0B1320] text-gray-200">
       <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
 
-      <header className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6">
-        <div className="max-w-xl">
-          <p className="mb-2 text-xs uppercase tracking-[0.28em] text-cyan-200/80">
-            Athernex 2025 Live Ward Monitor
-          </p>
-          <h1 className="font-display text-2xl font-bold text-white lg:text-4xl">
-            HealthGuard AI
-          </h1>
-          <p className="text-sm text-slate-300 lg:text-base">
-            Real-time deterioration prediction for ward patients.
-          </p>
-
-          <div className="ecg-track mt-4">
-            <svg className="ecg-wave" viewBox="0 0 400 48" preserveAspectRatio="none">
-              <path d="M0 24 L32 24 L40 24 L50 12 L60 34 L68 24 L110 24 L128 24 L138 10 L150 36 L160 24 L206 24 L220 24 L230 13 L240 34 L248 24 L286 24 L302 24 L312 10 L326 36 L338 24 L400 24" />
-            </svg>
-          </div>
+      <header className="flex items-center justify-between border-b border-white/5 bg-[#0F172A] px-6 py-4">
+        <div>
+          <h1 className="text-lg font-semibold text-white">HealthGuard AI</h1>
+          <p className="text-xs text-gray-400">Patient Monitoring Dashboard</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-green-400">● Live</span>
           <button
             type="button"
             onClick={() => setIsAddPatientOpen(true)}
-            className="rounded-xl border border-cyan-300/70 bg-cyan-500/15 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-200 hover:bg-cyan-400/25"
+            className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
           >
-            + Add Patient
+            Add Patient
           </button>
-          <div className="rounded-xl border border-cyan-400/30 bg-cyan-400/10 px-4 py-2 text-xs font-semibold tracking-wide text-cyan-100">
-            Simulation Live
-          </div>
+          <button type="button" className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+            Alerts
+          </button>
+          <button type="button" className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition">
+            Logout
+          </button>
         </div>
       </header>
 
-      <main className="mx-auto grid w-full max-w-7xl gap-5 px-4 pb-8 lg:grid-cols-[1.25fr_1fr] lg:px-6">
+      <main className="grid gap-5 px-6 py-5 lg:grid-cols-[1.25fr_1fr]">
         <WardDashboard
           patients={patients}
           selectedPatientId={selectedPatient?.id ?? null}
@@ -263,18 +248,18 @@ function App() {
           onAddPatient={() => setIsAddPatientOpen(true)}
         />
 
-        <section className="detail-panel rounded-2xl border border-slate-700/70 p-4 shadow-2xl shadow-black/35">
+        <section className="detail-panel rounded-xl border border-white/5 p-5">
           {selectedPatient ? (
             <>
               <div className="mb-4 flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white lg:text-xl">
+                  <h2 className="text-lg font-semibold text-white">
                     {selectedPatient.name}
                   </h2>
-                  <p className="text-xs text-slate-300">
+                  <p className="text-xs text-gray-400">
                     Bed {selectedPatient.bed} • Last update {selectedPatient.lastUpdated}
                   </p>
-                  <p className="mt-1 text-xs text-slate-400">
+                  <p className="mt-1 text-xs text-gray-400">
                     {selectedPatient.story || 'No clinical story available.'}
                   </p>
                 </div>
@@ -282,25 +267,25 @@ function App() {
               </div>
 
               <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-slate-100">
-                <div className="rounded-lg border border-slate-700/70 bg-app-card/80 p-2">
+                <div className="clean-card p-2">
                   HR: {selectedPatient.currentVitals.hr} bpm
                 </div>
-                <div className="rounded-lg bg-app-card p-2">
+                <div className="clean-card p-2">
                   SpO2: {selectedPatient.currentVitals.spo2}%
                 </div>
-                <div className="rounded-lg border border-slate-700/70 bg-app-card/80 p-2">
+                <div className="clean-card p-2">
                   RR: {selectedPatient.currentVitals.rr} /min
                 </div>
-                <div className="rounded-lg bg-app-card p-2">
+                <div className="clean-card p-2">
                   Temp: {selectedPatient.currentVitals.temp} F
                 </div>
-                <div className="col-span-2 rounded-lg bg-app-card p-2">
+                <div className="clean-card col-span-2 p-2">
                   BP: {selectedPatient.currentVitals.bp}
                 </div>
               </div>
 
-              <div className="mb-4 rounded-xl bg-app-card p-3">
-                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+              <div className="mb-4 clean-card p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-400">
                   Vitals Trend
                 </p>
                 <VitalsGraph history={selectedPatient.history} />
@@ -315,7 +300,7 @@ function App() {
                 <button
                   type="button"
                   onClick={() => void requestAiExplanation(selectedPatient)}
-                  className="rounded-lg bg-cyan-400 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-300"
+                  className="bg-blue-500 hover:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium transition"
                 >
                   Explain Now
                 </button>
@@ -323,7 +308,7 @@ function App() {
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-slate-700 bg-app-card p-4 text-sm text-slate-300">
+            <div className="clean-card p-4 text-sm text-gray-400">
               Select a patient to see details.
             </div>
           )}
