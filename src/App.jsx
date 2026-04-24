@@ -257,11 +257,12 @@ function App() {
     return patients.find((patient) => patient.id === selectedPatientId) ?? patients[0] ?? null
   }, [patients, selectedPatientId])
 
-  // ── Organ risk indicators (from main) ──
+  // ── Organ risk indicators ──
   const currentVitals = selectedPatient?.currentVitals ?? {}
   const kidneyRisk = currentVitals.urine !== undefined && currentVitals.urine < 30
   const heartRisk = currentVitals.hr > 100 || (currentVitals.hr > 100 && currentVitals.spo2 < 94)
   const liverRisk = currentVitals.liverFlag || currentVitals.eyeYellow || (currentVitals.bilirubin !== undefined && currentVitals.bilirubin > 2)
+  const lungRisk = currentVitals.rr > 22 || currentVitals.spo2 < 94
   const plateletRisk = currentVitals.platelets !== undefined && currentVitals.platelets < 100000
   const brainRisk = currentVitals.confusion === true
 
@@ -328,7 +329,7 @@ function App() {
 
   useEffect(() => {
     startSimulation(setPatients, {
-      intervalMs: 5000,
+      intervalMs: 8000,
       patientsRef,
       onPatientTurnedRed: (patient) => {
         setActiveAlert(createAlertPayload(patient))
@@ -460,25 +461,27 @@ function App() {
                   </div>
                 </div>
 
-                {/* Organ Status (from main) */}
+                {/* Organ Risk Assessment */}
                 <div className="mb-4">
                   <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                    Organ Status
+                    Organ Risk Assessment
                   </p>
                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div className={`rounded-lg p-2 ${lungRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
+                      🫁 Lungs: {lungRisk ? '🚨 Distress' : 'Normal'}
+                      <span className="ml-1 text-xs text-gray-400">(RR: {currentVitals.rr}, SpO2: {currentVitals.spo2}%)</span>
+                    </div>
+                    <div className={`rounded-lg p-2 ${heartRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
+                      ❤️ Heart: {heartRisk ? '🚨 Risk' : 'Normal'}
+                      <span className="ml-1 text-xs text-gray-400">(HR: {currentVitals.hr} bpm)</span>
+                    </div>
                     <div className={`rounded-lg p-2 ${kidneyRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       🫘 Kidney: {kidneyRisk ? '🚨 Risk' : 'Normal'}
                       <span className="ml-1 text-xs text-gray-400">(Urine: {currentVitals.urine ?? '--'} ml/hr)</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${heartRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      ❤️ Heart: {heartRisk ? '🚨 Risk' : 'Normal'}
-                    </div>
                     <div className={`rounded-lg p-2 ${liverRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       🟤 Liver: {liverRisk ? '🚨 Risk' : 'Normal'}
                       <span className="ml-1 text-xs text-gray-400">(Bili: {currentVitals.bilirubin?.toFixed(1) ?? '--'})</span>
-                    </div>
-                    <div className="rounded-lg bg-gray-50 p-2">
-                      👁️ Eyes: {currentVitals.eyeYellow ? '⚠️ Yellow' : 'Normal'}
                     </div>
                     <div className={`rounded-lg p-2 ${plateletRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       🩸 Platelets: {currentVitals.platelets != null ? Math.round(currentVitals.platelets).toLocaleString() : '--'}
@@ -486,6 +489,9 @@ function App() {
                     </div>
                     <div className={`rounded-lg p-2 ${brainRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       🧠 Brain: {brainRisk ? '🚨 Confused' : 'Normal'}
+                    </div>
+                    <div className="rounded-lg bg-gray-50 p-2">
+                      👁️ Eyes: {currentVitals.eyeYellow ? '⚠️ Yellow' : 'Normal'}
                     </div>
                   </div>
                 </div>

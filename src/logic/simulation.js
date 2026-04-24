@@ -16,6 +16,11 @@ function randFloat(min, max, precision = 1) {
   return Number(value.toFixed(precision))
 }
 
+function roundTo(value, decimals = 1) {
+  const factor = Math.pow(10, decimals)
+  return Math.round(value * factor) / factor
+}
+
 function nextClockTime() {
   return new Date().toLocaleTimeString([], {
     hour: '2-digit',
@@ -48,10 +53,10 @@ function nextBloodPressure(currentBp, hr, trend = 'stable') {
 }
 
 function updateStableVitals(current) {
-  const hr = clamp(current.hr + randInt(-2, 2), 55, 110)
-  const spo2 = clamp(current.spo2 + randInt(-1, 1), 92, 100)
-  const rr = clamp(current.rr + randInt(-1, 1), 12, 24)
-  const temp = clamp(current.temp + randFloat(-0.2, 0.2), 97.4, 100.2)
+  const hr = clamp(current.hr + randInt(-2, 2), 55, 100)
+  const spo2 = clamp(current.spo2 + randInt(-1, 1), 95, 100)
+  const rr = clamp(current.rr + randInt(-1, 1), 12, 20)
+  const temp = roundTo(clamp(current.temp + randFloat(-0.2, 0.2), 97.4, 99.2))
 
   return {
     hr,
@@ -60,12 +65,12 @@ function updateStableVitals(current) {
     temp,
     bp: nextBloodPressure(current.bp, hr, 'stable'),
 
-    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    urine: clamp((current.urine ?? 40) + randInt(-1, 1), 30, 60),
     liverFlag: current.liverFlag ?? false,
-    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.15, 0.15), 0.5, 5),
-    eyeYellow: current.eyeYellow ?? false,
-    platelets: clamp((current.platelets ?? 150000) + randInt(-2000, 2000), 20000, 300000),
-    confusion: current.confusion ?? false,
+    bilirubin: roundTo(clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.1), 0.5, 1.8)),
+    eyeYellow: false,
+    platelets: clamp((current.platelets ?? 150000) + randInt(-1000, 1000), 120000, 300000),
+    confusion: false,
   }
 }
 
@@ -73,7 +78,7 @@ function updateRecoveringVitals(current) {
   const hr = clamp(current.hr - randInt(1, 3), 60, 100)
   const spo2 = clamp(current.spo2 + randInt(0, 2), 93, 100)
   const rr = clamp(current.rr - randInt(0, 2), 12, 20)
-  const temp = clamp(current.temp - randFloat(0, 0.2), 97.2, 99.3)
+  const temp = roundTo(clamp(current.temp - randFloat(0, 0.2), 97.2, 99.3))
 
   return {
     hr,
@@ -82,64 +87,44 @@ function updateRecoveringVitals(current) {
     temp,
     bp: nextBloodPressure(current.bp, hr, 'recovering'),
 
-    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    urine: clamp((current.urine ?? 40) + randInt(0, 2), 25, 60),
     liverFlag: current.liverFlag ?? false,
-    bilirubin: clamp((current.bilirubin ?? 1.0) - randFloat(0, 0.1), 0.5, 5),
+    bilirubin: roundTo(clamp((current.bilirubin ?? 1.0) - randFloat(0, 0.1), 0.5, 5)),
     eyeYellow: current.eyeYellow ?? false,
     platelets: clamp((current.platelets ?? 150000) + randInt(2000, 5000), 20000, 300000),
     confusion: false,
   }
 }
 
-function updateDemoDeterioratingVitals(current, ticks) {
-  if (ticks < 24) {
-    const hr = clamp(current.hr + randInt(-1, 1), 88, 97)
-    const spo2 = clamp(current.spo2 + randInt(-1, 1), 95, 98)
-    const rr = clamp(current.rr + randInt(-1, 1), 16, 20)
-    const temp = clamp(current.temp + randFloat(-0.1, 0.1), 98.4, 99.1)
+function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
+  // ── Gradual demo-friendly deterioration ──
+  // Phase 1 (ticks 0–5):  Near-stable, subtle hints
+  // Phase 2 (ticks 6–12): Noticeable worsening, enters yellow
+  // Phase 3 (ticks 13+):  Rapid decline, enters red
 
-    return {
-      hr,
-      spo2,
-      rr,
-      temp,
-      bp: nextBloodPressure(current.bp, hr, 'stable'),
+  let hr, spo2, rr, temp
 
-      urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
-      liverFlag: current.liverFlag ?? false,
-      bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.1), 0.5, 5),
-      eyeYellow: current.eyeYellow ?? false,
-      platelets: clamp((current.platelets ?? 150000) + randInt(-1000, 1000), 20000, 300000),
-      confusion: current.confusion ?? false,
-    }
+  if (ticks < 6) {
+    // Phase 1: subtle — looks almost stable
+    hr   = clamp(current.hr + randInt(0, 2), 88, 100)
+    spo2 = clamp(current.spo2 - randInt(0, 1), 94, 98)
+    rr   = clamp(current.rr + randInt(0, 1), 16, 20)
+    temp = roundTo(clamp(current.temp + randFloat(0, 0.1), 98.4, 99.2))
+  } else if (ticks < 13) {
+    // Phase 2: moderate — clearly worsening
+    hr   = clamp(current.hr + randInt(1, 3), 95, 112)
+    spo2 = clamp(current.spo2 - randInt(0, 2), 90, 96)
+    rr   = clamp(current.rr + randInt(0, 2), 18, 26)
+    temp = roundTo(clamp(current.temp + randFloat(0.1, 0.2), 98.8, 100.2))
+  } else {
+    // Phase 3: rapid — critical
+    hr   = clamp(current.hr + randInt(2, 4), 105, 160)
+    spo2 = clamp(current.spo2 - randInt(1, 2), 80, 94)
+    rr   = clamp(current.rr + randInt(1, 2), 22, 36)
+    temp = roundTo(clamp(current.temp + randFloat(0.1, 0.3), 99.2, 103.5))
   }
 
-  if (ticks < 36) {
-    const hr = clamp(current.hr + randInt(1, 2), 90, 102)
-    const spo2 = clamp(current.spo2 - randInt(0, 1), 94, 97)
-    const rr = clamp(current.rr + randInt(0, 1), 17, 22)
-    const temp = clamp(current.temp + randFloat(0, 0.1), 98.6, 99.5)
-
-    return {
-      hr,
-      spo2,
-      rr,
-      temp,
-      bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
-
-      urine: clamp((current.urine ?? 40) - randInt(0, 2), 5, 60),
-      liverFlag: current.liverFlag ?? false,
-      bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0, 0.2), 0.5, 5),
-      eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
-      platelets: clamp((current.platelets ?? 150000) - randInt(1000, 5000), 10000, 300000),
-      confusion: current.confusion ?? false,
-    }
-  }
-
-  const hr = clamp(current.hr + randInt(2, 4), 95, 176)
-  const spo2 = clamp(current.spo2 - randInt(1, 2), 78, 96)
-  const rr = clamp(current.rr + randInt(1, 2), 18, 36)
-  const temp = clamp(current.temp + randFloat(0.1, 0.3), 98.8, 103.5)
+  const newPlatelets = clamp((current.platelets ?? 150000) - randInt(3000, 8000), 10000, 300000)
 
   return {
     hr,
@@ -150,37 +135,7 @@ function updateDemoDeterioratingVitals(current, ticks) {
 
     urine: clamp((current.urine ?? 40) - randInt(1, 3), 5, 60),
     liverFlag: current.liverFlag ?? false,
-    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0.1, 0.4), 0.5, 5),
-    eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
-    platelets: clamp((current.platelets ?? 150000) - randInt(3000, 10000), 10000, 300000),
-    confusion: current.confusion ?? false,
-  }
-}
-
-function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
-  if (speed === 'demo') {
-    return updateDemoDeterioratingVitals(current, ticks)
-  }
-
-  const fast = speed === 'fast'
-
-  const hr = clamp(current.hr + randInt(fast ? 3 : 2, fast ? 6 : 5), 65, 180)
-  const spo2 = clamp(current.spo2 - randInt(fast ? 2 : 1, 2), 78, 99)
-  const rr = clamp(current.rr + randInt(1, fast ? 3 : 2), 14, 36)
-  const temp = clamp(current.temp + randFloat(0.1, fast ? 0.4 : 0.3), 97.8, 103.5)
-
-  const newPlatelets = clamp((current.platelets ?? 150000) - randInt(5000, 15000), 10000, 300000)
-
-  return {
-    hr,
-    spo2,
-    rr,
-    temp,
-    bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
-
-    urine: clamp((current.urine ?? 40) - randInt(1, 4), 5, 60),
-    liverFlag: current.liverFlag ?? false,
-    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0.2, 0.5), 0.5, 5),
+    bilirubin: roundTo(clamp((current.bilirubin ?? 1.0) + randFloat(0.1, 0.3), 0.5, 5)),
     eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
     platelets: newPlatelets,
     confusion: newPlatelets < 50000 ? true : current.confusion,
@@ -234,16 +189,26 @@ async function evolvePatient(patient) {
   const history = [...previousHistory, entry].slice(-180)
   const simulationTicks = (patient.simulationTicks ?? 0) + 1
 
-  // ML-only scoring: get risk score directly from the ML backend
+  // ── Scoring: try ML backend, fallback to rule-based engine ──
+  let riskScore
+  let anomalyScore = 0
+  let isAnomaly = false
+
   const mlPrediction = await getMLPrediction(vitals)
-  const riskScore = mlPrediction.riskScore
+
+  if (mlPrediction.riskScore > 0) {
+    // ML backend is running and returned a real score
+    riskScore = mlPrediction.riskScore
+    anomalyScore = mlPrediction.anomalyScore
+    isAnomaly = mlPrediction.isAnomaly
+  } else {
+    // ML backend is down — use rule-based engine as fallback
+    riskScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
+  }
+
   const status = getStatusFromScore(riskScore)
 
-  // Store ML metadata for debugging/display
-  const anomalyScore = mlPrediction.anomalyScore
-  const isAnomaly = mlPrediction.isAnomaly
-
-  // Also store the entry's ML score so history cards can use it
+  // Also store the entry's risk score so history cards can use it
   entry.mlRiskScore = riskScore
 
   return {
@@ -272,7 +237,7 @@ export function startSimulation(setPatients, options = {}) {
     return simulationTimeoutId
   }
 
-  const { intervalMs = 5000, onPatientTurnedRed, patientsRef } = options
+  const { intervalMs = 8000, onPatientTurnedRed, patientsRef } = options
 
   async function tick() {
     // Read the latest patients from the ref (kept in sync by App.jsx)
