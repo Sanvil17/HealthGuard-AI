@@ -10,11 +10,12 @@ export const mockPatients = [
       urine: 42, liverFlag: false,
       bilirubin: 1.0, eyeYellow: false,
       platelets: 165000, confusion: false,
+      pf_ratio: 460,
     },
     history: [
-      { time: '10:00', hr: 76, spo2: 98, rr: 15, temp: 98.2, bp: '119/77', note: 'Stable post-op, resting well.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 168000, confusion: false },
-      { time: '11:00', hr: 77, spo2: 98, rr: 15, temp: 98.3, bp: '120/78', note: 'Comfortable, no complaints.', urine: 44, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 166000, confusion: false },
-      { time: '12:00', hr: 78, spo2: 98, rr: 15, temp: 98.4, bp: '120/78', note: 'Under routine observation.', urine: 42, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 165000, confusion: false },
+      { time: '10:00', hr: 76, spo2: 98, rr: 15, temp: 98.2, bp: '119/77', note: 'Stable post-op, resting well.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 168000, confusion: false, pf_ratio: 465 },
+      { time: '11:00', hr: 77, spo2: 98, rr: 15, temp: 98.3, bp: '120/78', note: 'Comfortable, no complaints.', urine: 44, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 166000, confusion: false, pf_ratio: 462 },
+      { time: '12:00', hr: 78, spo2: 98, rr: 15, temp: 98.4, bp: '120/78', note: 'Under routine observation.', urine: 42, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 165000, confusion: false, pf_ratio: 460 },
     ],
   },
   {
@@ -28,11 +29,12 @@ export const mockPatients = [
       urine: 40, liverFlag: false,
       bilirubin: 1.0, eyeYellow: false,
       platelets: 180000, confusion: false,
+      pf_ratio: 470,
     },
     history: [
-      { time: '10:00', hr: 71, spo2: 99, rr: 14, temp: 98.1, bp: '117/75', note: 'Comfortable.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 180000, confusion: false },
-      { time: '11:00', hr: 72, spo2: 99, rr: 14, temp: 98.2, bp: '118/76', note: 'No complaints.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 178000, confusion: false },
-      { time: '12:00', hr: 72, spo2: 99, rr: 14, temp: 98.2, bp: '118/76', note: 'Routine checks normal.', urine: 44, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 175000, confusion: false },
+      { time: '10:00', hr: 71, spo2: 99, rr: 14, temp: 98.1, bp: '117/75', note: 'Comfortable.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 180000, confusion: false, pf_ratio: 475 },
+      { time: '11:00', hr: 72, spo2: 99, rr: 14, temp: 98.2, bp: '118/76', note: 'No complaints.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 178000, confusion: false, pf_ratio: 472 },
+      { time: '12:00', hr: 72, spo2: 99, rr: 14, temp: 98.2, bp: '118/76', note: 'Routine checks normal.', urine: 44, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 175000, confusion: false, pf_ratio: 470 },
     ],
   },
   {
@@ -43,15 +45,17 @@ export const mockPatients = [
     deteriorationSpeed: 'normal',
     story: 'Admitted with respiratory distress, being closely monitored',
     currentVitals: {
-      hr: 90, spo2: 96, rr: 18, temp: 98.8, bp: '124/80',
+      // Starts looking almost normal — simulation will slowly worsen these
+      hr: 82, spo2: 97, rr: 16, temp: 98.5, bp: '118/78',
       urine: 42, liverFlag: false,
-      bilirubin: 1.3, eyeYellow: false,
-      platelets: 145000, confusion: false,
+      bilirubin: 1.1, eyeYellow: false,
+      platelets: 155000, confusion: false,
+      pf_ratio: 440,
     },
     history: [
-      { time: '10:00', hr: 86, spo2: 98, rr: 16, temp: 98.5, bp: '122/80', note: 'Patient comfortable, no complaints.', urine: 45, liverFlag: false, bilirubin: 1.2, eyeYellow: false, platelets: 150000, confusion: false },
-      { time: '11:00', hr: 88, spo2: 97, rr: 17, temp: 98.6, bp: '123/80', note: 'Mild shortness of breath reported.', urine: 44, liverFlag: false, bilirubin: 1.2, eyeYellow: false, platelets: 148000, confusion: false },
-      { time: '12:00', hr: 90, spo2: 96, rr: 18, temp: 98.8, bp: '124/80', note: 'Breathing slightly laboured, patient anxious.', urine: 42, liverFlag: false, bilirubin: 1.3, eyeYellow: false, platelets: 145000, confusion: false },
+      { time: '10:00', hr: 80, spo2: 98, rr: 15, temp: 98.3, bp: '117/77', note: 'Patient comfortable, no complaints.', urine: 45, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 160000, confusion: false, pf_ratio: 455 },
+      { time: '11:00', hr: 81, spo2: 97, rr: 15, temp: 98.4, bp: '118/78', note: 'Mild shortness of breath reported.', urine: 44, liverFlag: false, bilirubin: 1.0, eyeYellow: false, platelets: 158000, confusion: false, pf_ratio: 448 },
+      { time: '12:00', hr: 82, spo2: 97, rr: 16, temp: 98.5, bp: '118/78', note: 'Under close observation.', urine: 42, liverFlag: false, bilirubin: 1.1, eyeYellow: false, platelets: 155000, confusion: false, pf_ratio: 440 },
     ],
   },
   {
@@ -65,11 +69,12 @@ export const mockPatients = [
       urine: 38, liverFlag: false,
       bilirubin: 1.8, eyeYellow: false,
       platelets: 105000, confusion: false,
+      pf_ratio: 320,
     },
     history: [
-      { time: '10:00', hr: 100, spo2: 92, rr: 22, temp: 99.4, bp: '134/87', note: 'Required close watch.', urine: 32, liverFlag: false, bilirubin: 2.1, eyeYellow: true, platelets: 85000, confusion: true },
-      { time: '11:00', hr: 96, spo2: 93, rr: 20, temp: 99.1, bp: '131/85', note: 'Responding to treatment.', urine: 35, liverFlag: false, bilirubin: 1.9, eyeYellow: false, platelets: 95000, confusion: false },
-      { time: '12:00', hr: 92, spo2: 95, rr: 19, temp: 98.9, bp: '128/84', note: 'Clinically improving.', urine: 38, liverFlag: false, bilirubin: 1.8, eyeYellow: false, platelets: 105000, confusion: false },
+      { time: '10:00', hr: 100, spo2: 92, rr: 22, temp: 99.4, bp: '134/87', note: 'Required close watch.', urine: 32, liverFlag: false, bilirubin: 2.1, eyeYellow: true, platelets: 85000, confusion: true, pf_ratio: 240 },
+      { time: '11:00', hr: 96, spo2: 93, rr: 20, temp: 99.1, bp: '131/85', note: 'Responding to treatment.', urine: 35, liverFlag: false, bilirubin: 1.9, eyeYellow: false, platelets: 95000, confusion: false, pf_ratio: 280 },
+      { time: '12:00', hr: 92, spo2: 95, rr: 19, temp: 98.9, bp: '128/84', note: 'Clinically improving.', urine: 38, liverFlag: false, bilirubin: 1.8, eyeYellow: false, platelets: 105000, confusion: false, pf_ratio: 320 },
     ],
   },
   {
@@ -83,11 +88,12 @@ export const mockPatients = [
       urine: 45, liverFlag: false,
       bilirubin: 0.9, eyeYellow: false,
       platelets: 170000, confusion: false,
+      pf_ratio: 480,
     },
     history: [
-      { time: '10:00', hr: 68, spo2: 98, rr: 15, temp: 98.1, bp: '115/74', note: 'Watching overnight.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 170000, confusion: false },
-      { time: '11:00', hr: 67, spo2: 98, rr: 15, temp: 98.0, bp: '114/74', note: 'Stable observations.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 168000, confusion: false },
-      { time: '12:00', hr: 68, spo2: 98, rr: 15, temp: 98.1, bp: '115/74', note: 'No intervention needed.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 165000, confusion: false },
+      { time: '10:00', hr: 68, spo2: 98, rr: 15, temp: 98.1, bp: '115/74', note: 'Watching overnight.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 170000, confusion: false, pf_ratio: 485 },
+      { time: '11:00', hr: 67, spo2: 98, rr: 15, temp: 98.0, bp: '114/74', note: 'Stable observations.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 168000, confusion: false, pf_ratio: 482 },
+      { time: '12:00', hr: 68, spo2: 98, rr: 15, temp: 98.1, bp: '115/74', note: 'No intervention needed.', urine: 45, liverFlag: false, bilirubin: 0.9, eyeYellow: false, platelets: 165000, confusion: false, pf_ratio: 480 },
     ],
   },
 ]

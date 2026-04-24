@@ -27,6 +27,10 @@ const TREND_POINTS = {
   // Brain
   confusion: 20,
 
+  // Lungs (PF Ratio)
+  pfRatioLow: 15,       // PF < 300 → lung injury
+  pfRatioVeryLow: 25,   // PF < 200 → ARDS territory
+
   // Multi-organ
   multiOrganRisk: 25,
 }
@@ -151,6 +155,16 @@ export function calculateRiskScore(patient) {
   // ── Brain ──
   if (current.confusion) {
     score += TREND_POINTS.confusion
+  }
+
+  // ── Lungs (PF Ratio) ──
+  if (current.pf_ratio !== undefined) {
+    if (current.pf_ratio < 300) {
+      score += TREND_POINTS.pfRatioLow
+    }
+    if (current.pf_ratio < 200) {
+      score += TREND_POINTS.pfRatioVeryLow
+    }
   }
 
   // ── Multi-organ risk ──

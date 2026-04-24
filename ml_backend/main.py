@@ -24,10 +24,10 @@ app.add_middleware(
 
 # ── Model training at startup ────────────────────────────────────────────────
 
-NUM_TRAINING_SAMPLES = 500
+NUM_TRAINING_SAMPLES = 1000
 
 # Normal vital-sign ranges used to generate synthetic training data
-# Includes organ vitals for comprehensive anomaly detection
+# Includes organ vitals AND lung data for comprehensive anomaly detection
 NORMAL_RANGES = {
     "hr":           (60, 100),
     "spo2":         (95, 100),
@@ -39,35 +39,29 @@ NORMAL_RANGES = {
     "bilirubin":    (0.3, 1.2),
     "platelets":    (150000, 300000),
     "confusion":    (0, 0),       # 0 = no confusion in normal
+    "pf_ratio":     (400, 500),   # PaO2/FiO2 ratio — gold standard lung metric
 }
+
+FEATURE_NAMES = list(NORMAL_RANGES.keys())
 
 def generate_normal_samples(n: int = NUM_TRAINING_SAMPLES) -> np.ndarray:
     """Create *n* synthetic samples drawn uniformly from normal vital ranges."""
     rng = np.random.default_rng(seed=42)
     samples = np.column_stack([
-        rng.uniform(*NORMAL_RANGES["hr"], size=n),
-        rng.uniform(*NORMAL_RANGES["spo2"], size=n),
-        rng.uniform(*NORMAL_RANGES["rr"], size=n),
-        rng.uniform(*NORMAL_RANGES["temp"], size=n),
-        rng.uniform(*NORMAL_RANGES["bp_systolic"], size=n),
-        rng.uniform(*NORMAL_RANGES["bp_diastolic"], size=n),
-        rng.uniform(*NORMAL_RANGES["urine"], size=n),
-        rng.uniform(*NORMAL_RANGES["bilirubin"], size=n),
-        rng.uniform(*NORMAL_RANGES["platelets"], size=n),
-        rng.uniform(*NORMAL_RANGES["confusion"], size=n),
+        rng.uniform(*NORMAL_RANGES[name], size=n) for name in FEATURE_NAMES
     ])
     return samples
 
 # Train the Isolation Forest on synthetic normal data
-print("Training Isolation Forest on", NUM_TRAINING_SAMPLES, "synthetic normal samples (10 features)...")
+print(f"Training Isolation Forest on {NUM_TRAINING_SAMPLES} synthetic normal samples ({len(FEATURE_NAMES)} features)...")
 training_data = generate_normal_samples()
 model = IsolationForest(
-    n_estimators=150,
+    n_estimators=200,
     contamination=0.05,
     random_state=42,
 )
 model.fit(training_data)
-print("Model training complete. Features: hr, spo2, rr, temp, bp_systolic, bp_diastolic, urine, bilirubin, platelets, confusion")
+print(f"Model training complete. Features: {', '.join(FEATURE_NAMES)}")
 
 # ── Request / Response schemas ───────────────────────────────────────────────
 
@@ -82,6 +76,7 @@ class VitalsInput(BaseModel):
     bilirubin: float = 1.0
     platelets: float = 150000.0
     confusion: float = 0.0
+    pf_ratio: float = 450.0       # PaO2/FiO2 — normal ~400-500
 
 class PredictionOutput(BaseModel):
     anomaly_score: float
@@ -97,7 +92,13 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy", "model": "IsolationForest", "features": 10, "training_samples": NUM_TRAINING_SAMPLES}
+    return {
+        "status": "healthy",
+        "model": "IsolationForest",
+        "features": len(FEATURE_NAMES),
+        "feature_names": FEATURE_NAMES,
+        "training_samples": NUM_TRAINING_SAMPLES,
+    }
 
 
 @app.post("/predict", response_model=PredictionOutput)
@@ -121,6 +122,7 @@ def predict(vitals: VitalsInput):
         vitals.bilirubin,
         vitals.platelets,
         vitals.confusion,
+        vitals.pf_ratio,
     ]])
 
     # decision_function returns negative values for anomalies, positive for normal.
@@ -141,3 +143,9 @@ def predict(vitals: VitalsInput):
         risk_score=risk_score,
         is_anomaly=(prediction == -1),
     )
+
+if __name__ == "__main__":
+    import uvicorn
+    # Start the server on port 8000.
+    # Use reload=True so it automatically restarts if you change the code.
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)

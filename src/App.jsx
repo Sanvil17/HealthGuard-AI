@@ -23,6 +23,7 @@ const fallbackVitals = {
   eyeYellow: false,
   platelets: 150000,
   confusion: false,
+  pf_ratio: 450,
 }
 
 const PATIENTS_STORAGE_KEY = 'healthguard-ai-patients'
@@ -130,6 +131,7 @@ function buildVisitNoteEntry(patient, note, time) {
     eyeYellow: patient.currentVitals.eyeYellow,
     platelets: patient.currentVitals.platelets,
     confusion: patient.currentVitals.confusion,
+    pf_ratio: patient.currentVitals.pf_ratio,
     note,
   }
 }
@@ -262,7 +264,7 @@ function App() {
   const kidneyRisk = currentVitals.urine !== undefined && currentVitals.urine < 30
   const heartRisk = currentVitals.hr > 100 || (currentVitals.hr > 100 && currentVitals.spo2 < 94)
   const liverRisk = currentVitals.liverFlag || currentVitals.eyeYellow || (currentVitals.bilirubin !== undefined && currentVitals.bilirubin > 2)
-  const lungRisk = currentVitals.rr > 22 || currentVitals.spo2 < 94
+  const lungRisk = currentVitals.rr > 22 || currentVitals.spo2 < 94 || (currentVitals.pf_ratio !== undefined && currentVitals.pf_ratio < 300)
   const plateletRisk = currentVitals.platelets !== undefined && currentVitals.platelets < 100000
   const brainRisk = currentVitals.confusion === true
 
@@ -469,7 +471,7 @@ function App() {
                   <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
                     <div className={`rounded-lg p-2 ${lungRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       🫁 Lungs: {lungRisk ? '🚨 Distress' : 'Normal'}
-                      <span className="ml-1 text-xs text-gray-400">(RR: {currentVitals.rr}, SpO2: {currentVitals.spo2}%)</span>
+                      <span className="ml-1 text-xs text-gray-400">(RR: {currentVitals.rr}, SpO2: {currentVitals.spo2}%, PF: {currentVitals.pf_ratio ?? '--'})</span>
                     </div>
                     <div className={`rounded-lg p-2 ${heartRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
                       ❤️ Heart: {heartRisk ? '🚨 Risk' : 'Normal'}

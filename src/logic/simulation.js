@@ -1,4 +1,4 @@
-import { calculateRiskScore, getStatusFromScore } from './riskEngine.js'
+import { calculateRiskScore, calculateCombinedScore, getStatusFromScore } from './riskEngine.js'
 import { getMLPrediction } from '../api/mlBackend.js'
 
 let simulationTimeoutId = null
@@ -53,10 +53,11 @@ function nextBloodPressure(currentBp, hr, trend = 'stable') {
 }
 
 function updateStableVitals(current) {
-  const hr = clamp(current.hr + randInt(-2, 2), 55, 100)
-  const spo2 = clamp(current.spo2 + randInt(-1, 1), 95, 100)
-  const rr = clamp(current.rr + randInt(-1, 1), 12, 20)
-  const temp = roundTo(clamp(current.temp + randFloat(-0.2, 0.2), 97.4, 99.2))
+  // Tight ranges — stable patients should NOT drift into yellow during demo
+  const hr = clamp(current.hr + randInt(-1, 1), 60, 95)
+  const spo2 = clamp(current.spo2 + randInt(0, 1), 96, 100)
+  const rr = clamp(current.rr + randInt(-1, 1), 12, 18)
+  const temp = roundTo(clamp(current.temp + randFloat(-0.1, 0.1), 97.4, 98.8))
 
   return {
     hr,
@@ -65,12 +66,13 @@ function updateStableVitals(current) {
     temp,
     bp: nextBloodPressure(current.bp, hr, 'stable'),
 
-    urine: clamp((current.urine ?? 40) + randInt(-1, 1), 30, 60),
+    urine: clamp((current.urine ?? 40) + randInt(-1, 1), 35, 55),
     liverFlag: current.liverFlag ?? false,
-    bilirubin: roundTo(clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.1), 0.5, 1.8)),
+    bilirubin: roundTo(clamp((current.bilirubin ?? 1.0) + randFloat(-0.05, 0.05), 0.5, 1.5)),
     eyeYellow: false,
-    platelets: clamp((current.platelets ?? 150000) + randInt(-1000, 1000), 120000, 300000),
+    platelets: clamp((current.platelets ?? 150000) + randInt(-500, 500), 140000, 300000),
     confusion: false,
+    pf_ratio: clamp((current.pf_ratio ?? 450) + randInt(-5, 5), 420, 500),
   }
 }
 
@@ -93,35 +95,40 @@ function updateRecoveringVitals(current) {
     eyeYellow: current.eyeYellow ?? false,
     platelets: clamp((current.platelets ?? 150000) + randInt(2000, 5000), 20000, 300000),
     confusion: false,
+    pf_ratio: clamp((current.pf_ratio ?? 350) + randInt(5, 15), 200, 500),
   }
 }
 
 function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
   // ── Gradual demo-friendly deterioration ──
-  // Phase 1 (ticks 0–5):  Near-stable, subtle hints
-  // Phase 2 (ticks 6–12): Noticeable worsening, enters yellow
-  // Phase 3 (ticks 13+):  Rapid decline, enters red
+  // Phase 1 (ticks 0–8):   Near-stable, subtle hints         (~72 sec)
+  // Phase 2 (ticks 9–18):  Noticeable worsening, enters yellow (~80 sec)
+  // Phase 3 (ticks 19+):   Rapid decline, enters red           (~16 sec)
+  // Total: ~2.5 minutes from green to red
 
-  let hr, spo2, rr, temp
+  let hr, spo2, rr, temp, pf_ratio
 
-  if (ticks < 6) {
-    // Phase 1: subtle — looks almost stable
-    hr   = clamp(current.hr + randInt(0, 2), 88, 100)
-    spo2 = clamp(current.spo2 - randInt(0, 1), 94, 98)
-    rr   = clamp(current.rr + randInt(0, 1), 16, 20)
-    temp = roundTo(clamp(current.temp + randFloat(0, 0.1), 98.4, 99.2))
-  } else if (ticks < 13) {
-    // Phase 2: moderate — clearly worsening
-    hr   = clamp(current.hr + randInt(1, 3), 95, 112)
-    spo2 = clamp(current.spo2 - randInt(0, 2), 90, 96)
-    rr   = clamp(current.rr + randInt(0, 2), 18, 26)
-    temp = roundTo(clamp(current.temp + randFloat(0.1, 0.2), 98.8, 100.2))
+  if (ticks < 9) {
+    // Phase 1: subtle — looks almost stable, tiny hints of trouble
+    hr       = clamp(current.hr + randInt(0, 2), 80, 98)
+    spo2     = clamp(current.spo2 - randInt(0, 1), 94, 98)
+    rr       = clamp(current.rr + randInt(0, 1), 15, 20)
+    temp     = roundTo(clamp(current.temp + randFloat(0, 0.1), 98.2, 99.0))
+    pf_ratio = clamp((current.pf_ratio ?? 450) - randInt(5, 15), 320, 460)
+  } else if (ticks < 19) {
+    // Phase 2: moderate — clearly worsening, lungs struggling
+    hr       = clamp(current.hr + randInt(1, 3), 95, 115)
+    spo2     = clamp(current.spo2 - randInt(0, 2), 90, 96)
+    rr       = clamp(current.rr + randInt(0, 2), 18, 28)
+    temp     = roundTo(clamp(current.temp + randFloat(0.1, 0.2), 98.8, 100.5))
+    pf_ratio = clamp((current.pf_ratio ?? 350) - randInt(10, 25), 200, 350)
   } else {
-    // Phase 3: rapid — critical
-    hr   = clamp(current.hr + randInt(2, 4), 105, 160)
-    spo2 = clamp(current.spo2 - randInt(1, 2), 80, 94)
-    rr   = clamp(current.rr + randInt(1, 2), 22, 36)
-    temp = roundTo(clamp(current.temp + randFloat(0.1, 0.3), 99.2, 103.5))
+    // Phase 3: rapid — critical, lung failure
+    hr       = clamp(current.hr + randInt(2, 5), 110, 160)
+    spo2     = clamp(current.spo2 - randInt(1, 3), 80, 93)
+    rr       = clamp(current.rr + randInt(1, 3), 24, 38)
+    temp     = roundTo(clamp(current.temp + randFloat(0.1, 0.3), 99.5, 103.5))
+    pf_ratio = clamp((current.pf_ratio ?? 250) - randInt(15, 30), 80, 220)
   }
 
   const newPlatelets = clamp((current.platelets ?? 150000) - randInt(3000, 8000), 10000, 300000)
@@ -139,6 +146,7 @@ function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
     eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
     platelets: newPlatelets,
     confusion: newPlatelets < 50000 ? true : current.confusion,
+    pf_ratio,
   }
 }
 
@@ -171,6 +179,7 @@ function nextHistoryEntry(vitals, previousEntry) {
     eyeYellow: vitals.eyeYellow,
     platelets: vitals.platelets,
     confusion: vitals.confusion,
+    pf_ratio: vitals.pf_ratio,
 
     note: previousEntry?.note ?? '',
   }
@@ -189,21 +198,24 @@ async function evolvePatient(patient) {
   const history = [...previousHistory, entry].slice(-180)
   const simulationTicks = (patient.simulationTicks ?? 0) + 1
 
-  // ── Scoring: try ML backend, fallback to rule-based engine ──
+  // ── Scoring: BLEND ML anomaly detection with rule-based organ scoring ──
   let riskScore
   let anomalyScore = 0
   let isAnomaly = false
 
+  // Always calculate the rule-based score (organ-specific: lungs, kidneys, liver, etc.)
+  const ruleScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
+
   const mlPrediction = await getMLPrediction(vitals)
 
   if (mlPrediction.riskScore > 0) {
-    // ML backend is running and returned a real score
-    riskScore = mlPrediction.riskScore
+    // ML backend is running — blend ML + rule-based for comprehensive scoring
     anomalyScore = mlPrediction.anomalyScore
     isAnomaly = mlPrediction.isAnomaly
+    riskScore = calculateCombinedScore(ruleScore, anomalyScore)
   } else {
-    // ML backend is down — use rule-based engine as fallback
-    riskScore = calculateRiskScore({ ...patient, currentVitals: vitals, history })
+    // ML backend is down — use rule-based engine only
+    riskScore = ruleScore
   }
 
   const status = getStatusFromScore(riskScore)

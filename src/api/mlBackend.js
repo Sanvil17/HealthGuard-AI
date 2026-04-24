@@ -12,7 +12,7 @@ function parseBp(bp) {
 }
 
 /**
- * Send current patient vitals (including organ data) to the ML backend.
+ * Send current patient vitals (including organ + lung data) to the ML backend.
  * Returns the full prediction: { anomaly_score, risk_score, is_anomaly }
  *
  * @param {object} vitals - Full vitals object with organ data
@@ -36,6 +36,7 @@ export async function getMLPrediction(vitals) {
         bilirubin: vitals.bilirubin ?? 1.0,
         platelets: vitals.platelets ?? 150000,
         confusion: vitals.confusion ? 1.0 : 0.0,
+        pf_ratio: vitals.pf_ratio ?? 450,
       }),
     })
 
