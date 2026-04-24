@@ -17,6 +17,12 @@ const fallbackVitals = {
   rr: 16,
   temp: 98.6,
   bp: '120/80',
+  urine: 40,
+  liverFlag: false,
+  bilirubin: 1.0,
+  eyeYellow: false,
+  platelets: 150000,
+  confusion: false,
 }
 
 const PATIENTS_STORAGE_KEY = 'healthguard-ai-patients'
@@ -72,6 +78,12 @@ function buildPatientFromDraft(draftPatient, patients) {
     rr: Number(draftPatient.currentVitals.rr),
     temp: Number(draftPatient.currentVitals.temp),
     bp: String(draftPatient.currentVitals.bp || fallbackVitals.bp),
+    urine: fallbackVitals.urine,
+    liverFlag: fallbackVitals.liverFlag,
+    bilirubin: fallbackVitals.bilirubin,
+    eyeYellow: fallbackVitals.eyeYellow,
+    platelets: fallbackVitals.platelets,
+    confusion: fallbackVitals.confusion,
   }
 
   const nextPatient = {
@@ -166,6 +178,14 @@ function App() {
   const selectedPatient = useMemo(() => {
     return patients.find((patient) => patient.id === selectedPatientId) ?? patients[0] ?? null
   }, [patients, selectedPatientId])
+
+  const currentVitals = selectedPatient?.currentVitals ?? {}
+
+  const kidneyRisk = currentVitals.urine !== undefined && currentVitals.urine < 30
+  const heartRisk = currentVitals.hr > 110 || (currentVitals.hr > 100 && currentVitals.spo2 < 94)
+  const liverRisk = currentVitals.liverFlag || currentVitals.eyeYellow || (currentVitals.bilirubin !== undefined && currentVitals.bilirubin > 2)
+  const plateletRisk = currentVitals.platelets !== undefined && currentVitals.platelets < 100000
+  const brainRisk = currentVitals.confusion === true
 
   const requestAiExplanation = useCallback(async (patient) => {
     if (!patient || aiInFlightRef.current.has(patient.id)) {
@@ -353,6 +373,35 @@ function App() {
                 </div>
                 <div className="col-span-2 rounded-lg bg-app-card p-2">
                   BP: {selectedPatient.currentVitals.bp}
+                </div>
+              </div>
+
+              <div className="mb-4">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-slate-300">
+                  Organ Status
+                </p>
+                <div className="grid grid-cols-2 gap-2 text-sm text-slate-100">
+                  <div className={`rounded-lg p-2 ${kidneyRisk ? 'border border-rose-500/60 bg-rose-500/10' : 'bg-app-card'}`}>
+                    🫘 Kidney: {kidneyRisk ? '🚨 Risk' : 'Normal'}
+                    <span className="ml-1 text-xs text-slate-400">(Urine: {currentVitals.urine ?? '--'} ml/hr)</span>
+                  </div>
+                  <div className={`rounded-lg p-2 ${heartRisk ? 'border border-rose-500/60 bg-rose-500/10' : 'bg-app-card'}`}>
+                    ❤️ Heart: {heartRisk ? '🚨 Risk' : 'Normal'}
+                  </div>
+                  <div className={`rounded-lg p-2 ${liverRisk ? 'border border-rose-500/60 bg-rose-500/10' : 'bg-app-card'}`}>
+                    🟤 Liver: {liverRisk ? '🚨 Risk' : 'Normal'}
+                    <span className="ml-1 text-xs text-slate-400">(Bili: {currentVitals.bilirubin?.toFixed(1) ?? '--'})</span>
+                  </div>
+                  <div className="rounded-lg bg-app-card p-2">
+                    👁️ Eyes: {currentVitals.eyeYellow ? '⚠️ Yellow' : 'Normal'}
+                  </div>
+                  <div className={`rounded-lg p-2 ${plateletRisk ? 'border border-rose-500/60 bg-rose-500/10' : 'bg-app-card'}`}>
+                    🩸 Platelets: {currentVitals.platelets != null ? Math.round(currentVitals.platelets).toLocaleString() : '--'}
+                    {plateletRisk && <span className="ml-1 text-xs text-rose-300">Dengue Risk</span>}
+                  </div>
+                  <div className={`rounded-lg p-2 ${brainRisk ? 'border border-rose-500/60 bg-rose-500/10' : 'bg-app-card'}`}>
+                    🧠 Brain: {brainRisk ? '🚨 Confused' : 'Normal'}
+                  </div>
                 </div>
               </div>
 

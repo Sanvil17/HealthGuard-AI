@@ -59,6 +59,13 @@ function updateStableVitals(current) {
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'stable'),
+
+    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.2), 0.5, 5),
+    eyeYellow: current.eyeYellow ?? false,
+    platelets: clamp((current.platelets ?? 150000) + randInt(-2000, 2000), 20000, 300000),
+    confusion: current.confusion ?? false,
   }
 }
 
@@ -74,6 +81,13 @@ function updateRecoveringVitals(current) {
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'recovering'),
+
+    urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+    bilirubin: clamp((current.bilirubin ?? 1.0) - randFloat(0, 0.1), 0.5, 5),
+    eyeYellow: current.eyeYellow ?? false,
+    platelets: clamp((current.platelets ?? 150000) + randInt(2000, 5000), 20000, 300000),
+    confusion: false,
   }
 }
 
@@ -90,6 +104,13 @@ function updateDemoDeterioratingVitals(current, ticks) {
       rr,
       temp,
       bp: nextBloodPressure(current.bp, hr, 'stable'),
+
+      urine: clamp((current.urine ?? 40) + randInt(-2, 1), 5, 60),
+      liverFlag: current.liverFlag ?? false,
+      bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(-0.1, 0.1), 0.5, 5),
+      eyeYellow: current.eyeYellow ?? false,
+      platelets: clamp((current.platelets ?? 150000) + randInt(-1000, 1000), 20000, 300000),
+      confusion: current.confusion ?? false,
     }
   }
 
@@ -105,6 +126,13 @@ function updateDemoDeterioratingVitals(current, ticks) {
       rr,
       temp,
       bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
+
+      urine: clamp((current.urine ?? 40) - randInt(0, 2), 5, 60),
+      liverFlag: current.liverFlag ?? false,
+      bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0, 0.2), 0.5, 5),
+      eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
+      platelets: clamp((current.platelets ?? 150000) - randInt(1000, 5000), 10000, 300000),
+      confusion: current.confusion ?? false,
     }
   }
 
@@ -119,6 +147,13 @@ function updateDemoDeterioratingVitals(current, ticks) {
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
+
+    urine: clamp((current.urine ?? 40) - randInt(1, 3), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0.1, 0.4), 0.5, 5),
+    eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
+    platelets: clamp((current.platelets ?? 150000) - randInt(3000, 10000), 10000, 300000),
+    confusion: current.confusion ?? false,
   }
 }
 
@@ -134,12 +169,21 @@ function updateDeterioratingVitals(current, speed = 'normal', ticks = 0) {
   const rr = clamp(current.rr + randInt(1, fast ? 3 : 2), 14, 36)
   const temp = clamp(current.temp + randFloat(0.1, fast ? 0.4 : 0.3), 97.8, 103.5)
 
+  const newPlatelets = clamp((current.platelets ?? 150000) - randInt(5000, 15000), 10000, 300000)
+
   return {
     hr,
     spo2,
     rr,
     temp,
     bp: nextBloodPressure(current.bp, hr, 'deteriorating'),
+
+    urine: clamp((current.urine ?? 40) - randInt(1, 4), 5, 60),
+    liverFlag: current.liverFlag ?? false,
+    bilirubin: clamp((current.bilirubin ?? 1.0) + randFloat(0.2, 0.5), 0.5, 5),
+    eyeYellow: (current.bilirubin ?? 1.0) > 2.5,
+    platelets: newPlatelets,
+    confusion: newPlatelets < 50000 ? true : current.confusion,
   }
 }
 
@@ -165,12 +209,26 @@ function nextHistoryEntry(vitals, previousEntry) {
     rr: vitals.rr,
     temp: vitals.temp,
     bp: vitals.bp,
+
+    urine: vitals.urine,
+    liverFlag: vitals.liverFlag,
+    bilirubin: vitals.bilirubin,
+    eyeYellow: vitals.eyeYellow,
+    platelets: vitals.platelets,
+    confusion: vitals.confusion,
+
     note: previousEntry?.note ?? '',
   }
 }
 
 async function evolvePatient(patient) {
   const vitals = updatePatientVitals(patient)
+
+  // 2% chance of random liver flag trigger on each tick
+  if (Math.random() < 0.02) {
+    vitals.liverFlag = true
+  }
+
   const previousHistory = Array.isArray(patient.history) ? patient.history : []
   const entry = nextHistoryEntry(vitals, previousHistory.at(-1))
   const history = [...previousHistory, entry].slice(-180)
