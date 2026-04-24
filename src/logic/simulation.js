@@ -1,4 +1,4 @@
-import { calculateRiskScore, getStatusFromScore } from './riskEngine.js'
+import { getStatusFromScore } from './riskEngine.js'
 import { getMLPrediction } from '../api/mlBackend.js'
 
 let simulationTimeoutId = null

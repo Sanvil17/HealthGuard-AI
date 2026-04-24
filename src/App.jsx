@@ -230,10 +230,19 @@ function loadInitialPatients() {
   }
 }
 
+function filterPatientsByStatus(patients, filter) {
+  if (filter === 'all') {
+    return patients
+  }
+
+  return patients.filter((patient) => patient.status === filter)
+}
+
 // ── App Component ──────────────────────────────────────────────────────
 
 function App() {
   const [patients, setPatients] = useState(loadInitialPatients)
+  const [wardFilter, setWardFilter] = useState('all')
   const [selectedPatientId, setSelectedPatientId] = useState(
     () => mockPatients[0]?.id ?? null,
   )
@@ -253,9 +262,15 @@ function App() {
     window.localStorage.setItem(PATIENTS_STORAGE_KEY, JSON.stringify(patients))
   }, [patients])
 
+  const filteredPatients = useMemo(() => {
+    return filterPatientsByStatus(patients, wardFilter)
+  }, [patients, wardFilter])
+
   const selectedPatient = useMemo(() => {
-    return patients.find((patient) => patient.id === selectedPatientId) ?? patients[0] ?? null
-  }, [patients, selectedPatientId])
+    return filteredPatients.find((patient) => patient.id === selectedPatientId)
+      ?? filteredPatients[0]
+      ?? null
+  }, [filteredPatients, selectedPatientId])
 
   // ── Organ risk indicators (from main) ──
   const currentVitals = selectedPatient?.currentVitals ?? {}
@@ -351,6 +366,7 @@ function App() {
     aiInFlightRef.current.clear()
     window.localStorage.removeItem(PATIENTS_STORAGE_KEY)
     setPatients(hydratePatients(mockPatients))
+    setWardFilter('all')
     setSelectedPatientId(mockPatients[0]?.id ?? null)
     setActiveAlert(null)
     setAiLoadingByPatient({})
@@ -418,6 +434,9 @@ function App() {
         <div className="grid gap-5 lg:grid-cols-[1.25fr_1fr]">
           <WardDashboard
             patients={patients}
+            filteredPatients={filteredPatients}
+            activeFilter={wardFilter}
+            onFilterChange={setWardFilter}
             selectedPatientId={selectedPatient?.id ?? null}
             onSelectPatient={setSelectedPatientId}
             onAddPatient={() => setIsAddPatientOpen(true)}
