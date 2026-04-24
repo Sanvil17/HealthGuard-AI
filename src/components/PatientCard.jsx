@@ -3,18 +3,21 @@ import clsx from 'clsx'
 const statusMeta = {
   green: {
     label: 'Stable',
-    frame: 'border-white/5 bg-white',
-    badge: 'bg-green-50 text-green-600',
+    dot: 'bg-emerald-400',
+    frame: 'border-gray-100 bg-white hover:border-emerald-200',
+    badge: 'bg-emerald-50 text-emerald-700',
   },
   yellow: {
     label: 'Warning',
-    frame: 'border-white/5 bg-white',
-    badge: 'bg-orange-50 text-orange-500',
+    dot: 'bg-amber-400 status-pulse',
+    frame: 'border-amber-100 bg-amber-50/30 hover:border-amber-200',
+    badge: 'bg-amber-50 text-amber-700',
   },
   red: {
     label: 'Critical',
-    frame: 'border-red-500/20 bg-red-50',
-    badge: 'bg-red-50 text-red-500',
+    dot: 'bg-red-500 status-pulse',
+    frame: 'border-red-200 bg-red-50/40 hover:border-red-300',
+    badge: 'bg-red-50 text-red-600',
   },
 }
 
@@ -26,43 +29,47 @@ function PatientCard({ patient, selected, onSelect }) {
       type="button"
       onClick={onSelect}
       className={clsx(
-        'rounded-xl border p-4 text-left transition-all duration-200 hover:border-slate-200 hover:shadow-md hover:shadow-black/5',
+        'group rounded-xl border p-3.5 text-left transition-all duration-200',
         meta.frame,
-        selected && 'ring-2 ring-[#5FD1B7]/35',
+        selected && 'ring-2 ring-teal-400/40 shadow-sm',
       )}
     >
-      <div className="mb-2 flex items-start justify-between gap-2">
-        <div>
-          <div className="text-sm font-semibold text-gray-900">{patient.name}</div>
-          <div className="text-xs text-gray-500">Bed {patient.bed}</div>
+      {/* Top row: name + status dot */}
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-gray-900">{patient.name}</div>
+          <div className="text-[11px] text-gray-400">Bed {patient.bed}</div>
         </div>
-        <div className="rounded-full border border-white/60 px-2 py-0.5 text-xs font-semibold text-gray-700">
-          Risk {patient.riskScore}
+        <div className="flex items-center gap-2">
+          <div className={clsx('h-2.5 w-2.5 rounded-full', meta.dot)} />
+          <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-semibold', meta.badge)}>
+            {meta.label}
+          </span>
         </div>
       </div>
 
-      <div className="mb-2 flex items-center justify-between">
-        <span className={clsx('rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em]', meta.badge)}>
-          {meta.label}
-        </span>
-        <span className="text-[10px] text-gray-500">Updated {patient.lastUpdated || 'Now'}</span>
+      {/* Vitals row */}
+      <div className="mb-2 flex items-center gap-3 text-xs text-gray-600">
+        <span>HR <strong className="text-gray-800">{patient.currentVitals.hr}</strong></span>
+        <span className="text-gray-300">•</span>
+        <span>SpO2 <strong className="text-gray-800">{patient.currentVitals.spo2}%</strong></span>
+        <span className="text-gray-300">•</span>
+        <span>RR <strong className="text-gray-800">{patient.currentVitals.rr}</strong></span>
       </div>
 
-      <div className="grid grid-cols-3 gap-1 text-xs text-gray-700">
-        <span>HR {patient.currentVitals.hr}</span>
-        <span>SpO2 {patient.currentVitals.spo2}%</span>
-        <span>RR {patient.currentVitals.rr}</span>
-      </div>
-
-      <p className="mt-2 max-h-8 overflow-hidden text-[11px] text-gray-500">
-        {patient.story || 'No patient story available.'}
-      </p>
-
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-gray-100">
+      {/* Risk bar */}
+      <div className="h-1 w-full overflow-hidden rounded-full bg-gray-100">
         <div
-          className={clsx('h-full rounded-full', patient.status === 'red' ? 'bg-red-400' : patient.status === 'yellow' ? 'bg-orange-400' : 'bg-green-500')}
+          className={clsx(
+            'h-full rounded-full transition-all duration-500',
+            patient.status === 'red' ? 'bg-red-400' : patient.status === 'yellow' ? 'bg-amber-400' : 'bg-emerald-400',
+          )}
           style={{ width: `${Math.max(4, patient.riskScore)}%` }}
         />
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[10px] text-gray-400">
+        <span>Risk {patient.riskScore}/100</span>
+        <span>{patient.lastUpdated || 'Now'}</span>
       </div>
     </button>
   )

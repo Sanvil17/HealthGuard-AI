@@ -6,15 +6,15 @@
 
 :root {
   color-scheme: light;
-  --bg-primary: #f9fafb;
+  --bg-primary: #f4f6f8;
   --bg-secondary: #eef4f3;
   --card-bg: #ffffff;
   --card-border: rgba(17, 24, 39, 0.06);
-  --green: #22c55e;
+  --green: #10b981;
   --orange: #f59e0b;
   --red: #ef4444;
   --blue: #3b82f6;
-  --teal: #0f766e;
+  --teal: #0d9488;
   --text-main: #111827;
   --text-dim: #6b7280;
 }
@@ -30,42 +30,67 @@ body {
   font-family: 'Inter', 'Manrope', sans-serif;
   background: var(--bg-primary);
   color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
 }
 
-.dashboard-shell {
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 16px;
-  box-shadow: 0 8px 30px rgba(17, 24, 39, 0.06);
-}
+/* ─── Panels & Cards ─── */
 
 .dashboard-panel {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  box-shadow: 0 8px 24px rgba(17, 24, 39, 0.05);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 6px 20px rgba(0,0,0,0.03);
 }
 
 .dashboard-card {
   background: #ffffff;
   border: 1px solid rgba(17, 24, 39, 0.06);
   border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(17, 24, 39, 0.04);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.03);
 }
 
+/* ─── Buttons ─── */
+
 .dashboard-button {
-  background: #0f766e;
+  background: var(--teal);
   color: #ffffff;
   border-radius: 0.75rem;
-  transition: all 200ms ease;
+  font-weight: 500;
+  transition: all 180ms ease;
 }
 
 .dashboard-button:hover {
-  background: #0d9488;
+  background: #0f766e;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.25);
 }
 
+/* ─── Scrollbar (for the detail panel) ─── */
+
+.dashboard-panel::-webkit-scrollbar {
+  width: 5px;
+}
+.dashboard-panel::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.1);
+  border-radius: 10px;
+}
+.dashboard-panel::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ─── Status indicator pulse ─── */
+
+@keyframes status-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.status-pulse {
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+/* ─── Responsive ─── */
+
 @media (max-width: 768px) {
-  .dashboard-shell,
   .dashboard-panel,
   .dashboard-card {
     border-radius: 14px;

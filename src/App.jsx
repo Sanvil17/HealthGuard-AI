@@ -383,37 +383,34 @@ function App() {
     <div className="min-h-screen bg-[var(--bg-primary)] text-gray-900">
       <AlertBanner alert={activeAlert} onClose={() => setActiveAlert(null)} />
 
-      <header className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-6">
-        <div className="max-w-xl">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.28em] text-[var(--teal)]">
-            Athernex 2025 Live Ward Monitor
-          </p>
-          <h1 className="text-2xl font-bold text-gray-900 lg:text-4xl">
-            HealthGuard AI
-          </h1>
-          <p className="text-sm text-gray-500 lg:text-base">
-            Real-time deterioration prediction for ward patients.
-          </p>
+      <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-5 lg:px-6">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-teal-600 text-sm font-bold text-white shadow-sm">H</div>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">HealthGuard AI</h1>
+            <p className="text-[11px] text-gray-400">Real-time patient deterioration prediction</p>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-[11px] font-medium text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 status-pulse" />
+            Live
+          </div>
           <button
             type="button"
             onClick={handleResetWard}
-            className="rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:border-rose-300 hover:bg-rose-50 hover:text-rose-600"
+            className="rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-600 transition hover:border-rose-200 hover:text-rose-600"
           >
-            Reset Ward
+            Reset
           </button>
           <button
             type="button"
             onClick={() => setIsAddPatientOpen(true)}
-            className="dashboard-button px-4 py-2 text-sm font-semibold"
+            className="dashboard-button px-3 py-1.5 text-xs"
           >
             + Add Patient
           </button>
-          <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-2 text-xs font-semibold tracking-wide text-green-700">
-            Simulation Live
-          </div>
         </div>
       </header>
 
@@ -426,18 +423,18 @@ function App() {
             onAddPatient={() => setIsAddPatientOpen(true)}
           />
 
-          <section className="dashboard-panel max-h-[calc(100vh-10rem)] overflow-y-auto p-4">
+          <section className="dashboard-panel max-h-[calc(100vh-7rem)] overflow-y-auto p-4">
             {selectedPatient ? (
               <>
-                <div className="mb-4 flex items-start justify-between">
+                <div className="mb-3 flex items-start justify-between">
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900 lg:text-xl">
+                    <h2 className="text-base font-semibold text-gray-900">
                       {selectedPatient.name}
                     </h2>
-                    <p className="text-xs text-gray-500">
-                      Bed {selectedPatient.bed} • Last update {selectedPatient.lastUpdated}
+                    <p className="text-[11px] text-gray-500">
+                      Bed {selectedPatient.bed} • {selectedPatient.lastUpdated}
                     </p>
-                    <p className="mt-1 text-xs text-gray-400">
+                    <p className="mt-0.5 text-[11px] text-gray-400">
                       {selectedPatient.story || 'No clinical story available.'}
                     </p>
                   </div>
@@ -445,55 +442,54 @@ function App() {
                 </div>
 
                 {/* Current Vitals */}
-                <div className="mb-4 grid grid-cols-2 gap-2 text-sm text-gray-700">
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-2">
-                    HR: {selectedPatient.currentVitals.hr} bpm
-                  </div>
-                  <div className="rounded-lg bg-gray-50 p-2">
-                    SpO2: {selectedPatient.currentVitals.spo2}%
-                  </div>
-                  <div className="rounded-lg border border-gray-100 bg-gray-50 p-2">
-                    RR: {selectedPatient.currentVitals.rr} /min
-                  </div>
-                  <div className="rounded-lg bg-gray-50 p-2">
-                    Temp: {selectedPatient.currentVitals.temp} F
-                  </div>
-                  <div className="col-span-2 rounded-lg bg-gray-50 p-2">
-                    BP: {selectedPatient.currentVitals.bp}
-                  </div>
+                <div className="mb-3 grid grid-cols-5 gap-1.5">
+                  {[
+                    { label: 'HR', value: selectedPatient.currentVitals.hr, unit: 'bpm' },
+                    { label: 'SpO2', value: `${selectedPatient.currentVitals.spo2}%` },
+                    { label: 'RR', value: selectedPatient.currentVitals.rr, unit: '/min' },
+                    { label: 'Temp', value: selectedPatient.currentVitals.temp, unit: '°F' },
+                    { label: 'BP', value: selectedPatient.currentVitals.bp },
+                  ].map((v) => (
+                    <div key={v.label} className="rounded-lg bg-gray-50 px-2 py-1.5 text-center">
+                      <div className="text-[9px] font-medium text-gray-400">{v.label}</div>
+                      <div className="text-xs font-semibold text-gray-800">{v.value}</div>
+                    </div>
+                  ))}
                 </div>
 
                 {/* Organ Risk Assessment */}
-                <div className="mb-4">
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
-                    Organ Risk Assessment
+                <div className="mb-3">
+                  <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-400">
+                    Organ Risk
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
-                    <div className={`rounded-lg p-2 ${lungRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      🫁 Lungs: {lungRisk ? '🚨 Distress' : 'Normal'}
-                      <span className="ml-1 text-xs text-gray-400">(RR: {currentVitals.rr}, SpO2: {currentVitals.spo2}%, PF: {currentVitals.pf_ratio ?? '--'})</span>
+                  <div className="grid grid-cols-4 gap-1.5 text-[11px] text-gray-700">
+                    <div className={`rounded-lg px-2 py-1.5 ${lungRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      🫁 {lungRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">PF {currentVitals.pf_ratio ?? '--'}</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${heartRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      ❤️ Heart: {heartRisk ? '🚨 Risk' : 'Normal'}
-                      <span className="ml-1 text-xs text-gray-400">(HR: {currentVitals.hr} bpm)</span>
+                    <div className={`rounded-lg px-2 py-1.5 ${heartRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      ❤️ {heartRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">{currentVitals.hr} bpm</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${kidneyRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      🫘 Kidney: {kidneyRisk ? '🚨 Risk' : 'Normal'}
-                      <span className="ml-1 text-xs text-gray-400">(Urine: {currentVitals.urine ?? '--'} ml/hr)</span>
+                    <div className={`rounded-lg px-2 py-1.5 ${kidneyRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      🫘 {kidneyRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">{currentVitals.urine ?? '--'} ml/hr</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${liverRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      🟤 Liver: {liverRisk ? '🚨 Risk' : 'Normal'}
-                      <span className="ml-1 text-xs text-gray-400">(Bili: {currentVitals.bilirubin?.toFixed(1) ?? '--'})</span>
+                    <div className={`rounded-lg px-2 py-1.5 ${liverRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      🟤 {liverRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">Bili {currentVitals.bilirubin?.toFixed(1) ?? '--'}</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${plateletRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      🩸 Platelets: {currentVitals.platelets != null ? Math.round(currentVitals.platelets).toLocaleString() : '--'}
-                      {plateletRisk && <span className="ml-1 text-xs text-rose-500">Dengue Risk</span>}
+                    <div className={`rounded-lg px-2 py-1.5 ${plateletRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      🩸 {plateletRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">{currentVitals.platelets != null ? `${Math.round(currentVitals.platelets / 1000)}k` : '--'}</span>
                     </div>
-                    <div className={`rounded-lg p-2 ${brainRisk ? 'border border-rose-300 bg-rose-50' : 'bg-gray-50'}`}>
-                      🧠 Brain: {brainRisk ? '🚨 Confused' : 'Normal'}
+                    <div className={`rounded-lg px-2 py-1.5 ${brainRisk ? 'border border-rose-200 bg-rose-50' : 'bg-gray-50'}`}>
+                      🧠 {brainRisk ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">{currentVitals.confusion ? 'Yes' : 'Clear'}</span>
                     </div>
-                    <div className="rounded-lg bg-gray-50 p-2">
-                      👁️ Eyes: {currentVitals.eyeYellow ? '⚠️ Yellow' : 'Normal'}
+                    <div className="rounded-lg bg-gray-50 px-2 py-1.5">
+                      👁️ {currentVitals.eyeYellow ? '⚠️' : '✓'}
+                      <span className="ml-0.5 text-[10px] text-gray-400">{currentVitals.eyeYellow ? 'Yellow' : 'Normal'}</span>
                     </div>
                   </div>
                 </div>
@@ -531,13 +527,7 @@ function App() {
                   </div>
 
                   {isSelectedPatientNotePanelOpen ? (
-                    <div className="mb-4 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-4">
-                      <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                        Nurse Visit Note
-                      </p>
-                      <p className="mb-3 text-xs text-emerald-700/80">
-                        Use this for scheduled hourly rounds or whenever the patient needs a warning check.
-                      </p>
+                    <div className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50/30 p-3">
                       <textarea
                         value={nurseNoteDrafts[selectedPatient.id] ?? ''}
                         onChange={(event) => {
@@ -547,20 +537,16 @@ function App() {
                             [selectedPatient.id]: value,
                           }))
                         }}
-                        placeholder="Example: Patient resting comfortably, vitals stable, continue monitoring."
-                        className="min-h-24 w-full rounded-xl border border-emerald-100 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-[#0F766E]"
+                        placeholder="Write nurse observation..."
+                        className="min-h-16 w-full rounded-lg border border-emerald-100 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-teal-500"
                       />
-
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <p className="text-xs text-emerald-700/70">
-                          Saving will timestamp this note into the patient history.
-                        </p>
+                      <div className="mt-2 flex justify-end">
                         <button
                           type="button"
                           onClick={handleSaveNurseNote}
-                          className="dashboard-button px-4 py-2 text-sm font-medium"
+                          className="dashboard-button px-3 py-1.5 text-xs"
                         >
-                          Save Visit Note
+                          Save Note
                         </button>
                       </div>
                     </div>
@@ -597,31 +583,21 @@ function App() {
                       return (
                         <article
                           key={`${entry.time}-${entry.hr}-${entry.spo2}`}
-                          className={`rounded-xl border px-4 py-3 ${cardClass}`}
+                          className={`rounded-lg border px-3 py-2.5 ${cardClass}`}
                         >
-                          <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center justify-between gap-3">
                             <div className="min-w-0 flex-1">
-                              <p className={`text-sm font-semibold uppercase tracking-[0.12em] ${labelClass}`}>
-                                {getAlertLabel(snapshotStatus)}
-                              </p>
-                              <p className="mt-1 text-sm text-gray-700">
-                                Risk factors: {factorText}
-                              </p>
-                              <p className="mt-2 text-xs text-gray-500">
-                                {entry.time}
-                              </p>
-                              <p className="mt-1 text-sm text-gray-600">
-                                Nurse Note: {entry.note || 'Pending'}
-                              </p>
-                            </div>
-
-                            <div className="flex shrink-0 flex-col items-end gap-1 text-right">
-                              <span className={`text-[10px] font-semibold uppercase tracking-[0.18em] ${labelClass}`}>
-                                {getAlertLabel(snapshotStatus)}
-                              </span>
-                              <div className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-gray-700 shadow-sm ring-1 ring-gray-200">
-                                Score: <span className={scoreClass}>{snapshotScore}</span>
+                              <div className="flex items-center gap-2">
+                                <span className={`text-[10px] font-semibold uppercase tracking-wider ${labelClass}`}>
+                                  {getAlertLabel(snapshotStatus)}
+                                </span>
+                                <span className="text-[10px] text-gray-400">{entry.time}</span>
                               </div>
+                              <p className="mt-1 text-xs text-gray-600">{factorText}</p>
+                              {entry.note && <p className="mt-1 text-xs text-gray-500 italic">{entry.note}</p>}
+                            </div>
+                            <div className={`shrink-0 rounded-full bg-white px-2.5 py-1 text-xs font-semibold shadow-sm ring-1 ring-gray-100 ${scoreClass}`}>
+                              {snapshotScore}
                             </div>
                           </div>
                         </article>
@@ -635,11 +611,11 @@ function App() {
                   loading={Boolean(aiLoadingByPatient[selectedPatient.id])}
                 />
 
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
                     onClick={() => void requestAiExplanation(selectedPatient)}
-                    className="dashboard-button px-4 py-2 text-sm font-medium"
+                    className="dashboard-button px-3 py-1.5 text-xs"
                   >
                     Explain Now
                   </button>
